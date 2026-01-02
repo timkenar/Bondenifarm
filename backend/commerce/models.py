@@ -31,6 +31,7 @@ class Sale(models.Model):
     custom_data = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     livestock = models.ForeignKey('livestock.Livestock', on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
+    consumable = models.ForeignKey('inventory.Consumable', on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
     # produce_record link if needed, or just product type
 
     def save(self, *args, **kwargs):

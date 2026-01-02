@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import type { Sale, Expenditure } from '../types/commerce';
+import type { Consumable } from '../types/inventory';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import ActionMenu from '../components/ActionMenu';
-import { Plus, TrendingUp, TrendingDown, Download, Calendar } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Download, Calendar, AlertCircle } from 'lucide-react';
 
 const CommercePage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
     const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
+    const [consumables, setConsumables] = useState<Consumable[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'sales' | 'expenditure'>('sales');
 
@@ -26,17 +28,18 @@ const CommercePage: React.FC = () => {
 
     const [saleFormData, setSaleFormData] = useState({
         date: new Date().toISOString().split('T')[0],
-        product: 'EGGS',
+        product: '',
+        consumable: '',
         quantity: '',
-        unit: 'crates',
+        unit: '',
         unit_price: '',
         customer_name: '',
-        payment_status: 'PAID'
+        payment_status: 'PAID' as 'PAID' | 'PARTIAL' | 'PENDING'
     });
 
     const [expenseFormData, setExpenseFormData] = useState({
         date: new Date().toISOString().split('T')[0],
-        category: 'FEED',
+        category: 'FEED' as 'FEED' | 'LABOR' | 'FUEL' | 'MAINTENANCE' | 'TREATMENT' | 'OTHER',
         amount: '',
         description: ''
     });
@@ -47,12 +50,14 @@ const CommercePage: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            const [salesRes, expenseRes] = await Promise.all([
+            const [salesRes, expenseRes, consumablesRes] = await Promise.all([
                 api.get('/sales/'),
-                api.get('/expenditure/')
+                api.get('/expenditure/'),
+                api.get('/inventory/consumables/')
             ]);
             setSales(salesRes.data);
             setExpenditures(expenseRes.data);
+            setConsumables(consumablesRes.data);
         } catch (error) {
             console.error("Failed to fetch commerce data", error);
         } finally {
@@ -66,6 +71,7 @@ const CommercePage: React.FC = () => {
             setSaleFormData({
                 date: sale.date,
                 product: sale.product,
+                consumable: sale.consumable || '',
                 quantity: sale.quantity,
                 unit: sale.unit,
                 unit_price: sale.unit_price,
@@ -76,9 +82,10 @@ const CommercePage: React.FC = () => {
             setEditingSale(null);
             setSaleFormData({
                 date: new Date().toISOString().split('T')[0],
-                product: 'EGGS',
+                product: '',
+                consumable: '',
                 quantity: '',
-                unit: 'crates',
+                unit: '',
                 unit_price: '',
                 customer_name: '',
                 payment_status: 'PAID'
@@ -87,36 +94,49 @@ const CommercePage: React.FC = () => {
         setIsSaleModalOpen(true);
     };
 
-    const handleOpenExpenseModal = (expense?: Expenditure) => {
-        if (expense) {
-            setEditingExpense(expense);
-            setExpenseFormData({
-                date: expense.date,
-                category: expense.category,
-                amount: expense.amount,
-                description: expense.description
+    const handleConsumableChange = (consumableId: string) => {
+        const item = consumables.find(c => c.id === consumableId);
+        if (item) {
+            setSaleFormData({
+                ...saleFormData,
+                consumable: consumableId,
+                product: item.item_name.toUpperCase() as any, // Try to match enum or just use name
+                unit: item.unit,
+                unit_price: item.unit_price || ''
             });
         } else {
-            setEditingExpense(null);
-            setExpenseFormData({
-                date: new Date().toISOString().split('T')[0],
-                category: 'FEED',
-                amount: '',
-                description: ''
+            setSaleFormData({
+                ...saleFormData,
+                consumable: '',
+                product: 'OTHER',
+                unit: '',
+                unit_price: ''
             });
         }
-        setIsExpenseModalOpen(true);
     };
 
     const handleSubmitSale = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // If it's a new sale, check stock
+            if (!editingSale && saleFormData.consumable) {
+                const item = consumables.find(c => c.id === saleFormData.consumable);
+                if (item && parseFloat(saleFormData.quantity) > parseFloat(item.quantity_on_hand)) {
+                    if (!confirm(`Insufficient stock! You only have ${item.quantity_on_hand} ${item.unit} in hand. Proceed anyway?`)) {
+                        return;
+                    }
+                }
+            }
+
             if (editingSale) {
                 const res = await api.put(`/sales/${editingSale.id}/`, saleFormData);
                 setSales(sales.map(s => s.id === editingSale.id ? res.data : s));
             } else {
                 const res = await api.post('/sales/', saleFormData);
                 setSales([res.data, ...sales]);
+                // Refresh consumables to see reduced stock
+                const consumablesRes = await api.get('/inventory/consumables/');
+                setConsumables(consumablesRes.data);
             }
             setIsSaleModalOpen(false);
         } catch (error) {
@@ -177,7 +197,6 @@ const CommercePage: React.FC = () => {
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0);
     const netProfit = totalRevenue - totalExpenses;
 
-    // CSV Export
     const exportToCSV = (data: any[], filename: string) => {
         if (data.length === 0) return;
         const headers = Object.keys(data[0]).join(',');
@@ -190,6 +209,8 @@ const CommercePage: React.FC = () => {
         a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
+
+    const selectedConsumable = consumables.find(c => c.id === saleFormData.consumable);
 
     return (
         <div>
@@ -295,23 +316,43 @@ const CommercePage: React.FC = () => {
             {/* Sales Modal */}
             <Modal isOpen={isSaleModalOpen} onClose={() => setIsSaleModalOpen(false)} title={editingSale ? "Edit Sale" : "Record Sale"}>
                 <form onSubmit={handleSubmitSale} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Date</label>
-                        <input type="date" className="input" required value={saleFormData.date} onChange={e => setSaleFormData({ ...saleFormData, date: e.target.value })} />
-                    </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Product</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Date</label>
+                            <input type="date" className="input" required value={saleFormData.date} onChange={e => setSaleFormData({ ...saleFormData, date: e.target.value })} />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Select from Inventory</label>
+                            <select className="input" value={saleFormData.consumable} onChange={e => handleConsumableChange(e.target.value)}>
+                                <option value="">-- Manual/Other --</option>
+                                {consumables.map(c => (
+                                    <option key={c.id} value={c.id}>{c.item_name} ({c.quantity_on_hand} {c.unit} left)</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {selectedConsumable && (
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                            <AlertCircle size={16} />
+                            <span>Currently in stock: <strong>{selectedConsumable.quantity_on_hand} {selectedConsumable.unit}</strong></span>
+                        </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Product Type</label>
                             <select className="input" value={saleFormData.product} onChange={e => setSaleFormData({ ...saleFormData, product: e.target.value as any })}>
                                 <option value="EGGS">Eggs</option>
                                 <option value="MILK">Milk</option>
                                 <option value="MAIZE">Maize</option>
+                                <option value="TOMATOES">Tomatoes</option>
                                 <option value="MANURE">Manure</option>
                                 <option value="OTHER">Other</option>
                             </select>
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Payment</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Payment Status</label>
                             <select className="input" value={saleFormData.payment_status} onChange={e => setSaleFormData({ ...saleFormData, payment_status: e.target.value as any })}>
                                 <option value="PAID">Paid</option>
                                 <option value="PARTIAL">Partial</option>
@@ -326,15 +367,15 @@ const CommercePage: React.FC = () => {
                         </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Unit</label>
-                            <input type="text" className="input" value={saleFormData.unit} onChange={e => setSaleFormData({ ...saleFormData, unit: e.target.value })} />
+                            <input type="text" className="input" required value={saleFormData.unit} onChange={e => setSaleFormData({ ...saleFormData, unit: e.target.value })} />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Price/Unit</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Price/Unit (KES)</label>
                             <input type="number" step="0.01" className="input" required value={saleFormData.unit_price} onChange={e => setSaleFormData({ ...saleFormData, unit_price: e.target.value })} />
                         </div>
                     </div>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Customer</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Customer Name</label>
                         <input type="text" className="input" value={saleFormData.customer_name} onChange={e => setSaleFormData({ ...saleFormData, customer_name: e.target.value })} />
                     </div>
                     <button type="submit" className="btn btn-primary">{editingSale ? "Update Sale" : "Save Sale"}</button>
@@ -380,7 +421,6 @@ const CommercePage: React.FC = () => {
                 </div>
             ) : activeTab === 'sales' ? (
                 <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    {/* Mobile Card View */}
                     <div className="mobile-only" style={{ display: 'none' }}>
                         {filteredSales.length === 0 ? (
                             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No sales found.</div>
@@ -405,7 +445,6 @@ const CommercePage: React.FC = () => {
                             ))
                         )}
                     </div>
-                    {/* Desktop Table */}
                     <div className="desktop-only" style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderBottom: '1px solid var(--border)' }}>
@@ -445,7 +484,6 @@ const CommercePage: React.FC = () => {
                 </div>
             ) : (
                 <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    {/* Mobile Card View for Expenses */}
                     <div className="mobile-only" style={{ display: 'none' }}>
                         {filteredExpenses.length === 0 ? (
                             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No expenses found.</div>
@@ -467,7 +505,6 @@ const CommercePage: React.FC = () => {
                             ))
                         )}
                     </div>
-                    {/* Desktop Table */}
                     <div className="desktop-only" style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderBottom: '1px solid var(--border)' }}>

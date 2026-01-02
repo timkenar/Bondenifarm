@@ -8,6 +8,7 @@ export interface Sale {
     customer_name: string;
     payment_status: 'PAID' | 'PARTIAL' | 'PENDING';
     date: string;
+    consumable?: string; // ID of the consumable
 }
 
 export interface Purchase {
