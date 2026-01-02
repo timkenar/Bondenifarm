@@ -94,6 +94,27 @@ const CommercePage: React.FC = () => {
         setIsSaleModalOpen(true);
     };
 
+    const handleOpenExpenseModal = (expense?: Expenditure) => {
+        if (expense) {
+            setEditingExpense(expense);
+            setExpenseFormData({
+                date: expense.date,
+                category: expense.category,
+                amount: expense.amount,
+                description: expense.description || ''
+            });
+        } else {
+            setEditingExpense(null);
+            setExpenseFormData({
+                date: new Date().toISOString().split('T')[0],
+                category: 'FEED',
+                amount: '',
+                description: ''
+            });
+        }
+        setIsExpenseModalOpen(true);
+    };
+
     const handleConsumableChange = (consumableId: string) => {
         const item = consumables.find(c => c.id === consumableId);
         if (item) {
