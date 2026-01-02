@@ -16,6 +16,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 import os
+import dj_database_url
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -97,24 +98,16 @@ WSGI_APPLICATION = 'bondenifarm.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-if os.environ.get('DATABASE') == 'postgres':
-    DATABASES = {
-        'default': {
-            'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.environ.get('SQL_DATABASE', 'bondenifarm'),
-            'USER': os.environ.get('SQL_USER', 'bondenifarm'),
-            'PASSWORD': os.environ.get('SQL_PASSWORD', 'bondenifarm'),
-            'HOST': os.environ.get('SQL_HOST', 'db'),
-            'PORT': os.environ.get('SQL_PORT', '5432'),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# Database
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+DATABASES = {
+    'default': dj_database_url.parse(
+        "postgresql://bondeni_user:W6L_E%3A7MzAsgYw_@206.72.201.211:5432/bondeni",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
 
 
 # Password validation
