@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create generic axios instance
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api', // Update in production
+    baseURL: '/api', // Relative path works automatically in production (since backend serves frontend)
     headers: {
         'Content-Type': 'application/json',
     },
