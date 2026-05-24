@@ -1,10 +1,9 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
 from django.urls import re_path
-from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.static import serve
 
 
 def health_check(request):
@@ -24,11 +23,17 @@ urlpatterns = [
     path('api/produce/', include('produce.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
 # Catch-all for React frontend
 # This must be the LAST pattern to avoid blocking API/admin routes
 urlpatterns += [
-    re_path(r'^.*$', lambda request: render(request, 'index.html'))
+    re_path(r'^.*$', lambda request: JsonResponse({
+        'detail': 'Bondenifarm API is running.',
+        'health': '/health/',
+        'api': '/api/',
+        'admin': '/admin/',
+    }))
 ]

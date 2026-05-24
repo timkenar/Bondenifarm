@@ -1,0 +1,12 @@
+services:
+  web:
+    ports:
+      - "127.0.0.1:8002:8000"
+
+  nginx:
+    profiles:
+      - disabled
+
+  certbot:
+    profiles:
+      - disabled
