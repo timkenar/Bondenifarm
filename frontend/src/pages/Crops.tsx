@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Wheat, Plus, Calendar, Sprout, Bug, Scissors } from 'lucide-react';
+import { Wheat, Plus, Calendar, Sprout, Scissors } from 'lucide-react';
 import api from '../api/axios';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
@@ -246,7 +246,7 @@ const CropsPage: React.FC = () => {
 
             {/* Add Season Modal */}
             {showAddModal && (
-                <Modal onClose={() => setShowAddModal(false)} title="New Crop Season">
+                <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="New Crop Season">
                     <form onSubmit={handleSubmit}>
                         <div className="form-grid">
                             <div className="form-group">

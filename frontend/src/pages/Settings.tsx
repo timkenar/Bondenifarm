@@ -239,7 +239,7 @@ const SettingsPage: React.FC = () => {
 
                     {/* Add Plot Modal */}
                     {showPlotModal && (
-                        <Modal onClose={() => setShowPlotModal(false)} title="Add Farm Plot">
+                        <Modal isOpen={showPlotModal} onClose={() => setShowPlotModal(false)} title="Add Farm Plot">
                             <form onSubmit={createPlot}>
                                 <div className="form-grid">
                                     <div className="form-group">
