@@ -1,14 +1,14 @@
 :root {
-  --primary: #10B981;
-  /* Emerald 500 */
-  --primary-hover: #059669;
-  /* Emerald 600 */
+  --primary: #4D7C0F;
+  /* Lime 700 — matches landing page --ld-green-deep */
+  --primary-hover: #3F6212;
+  /* Lime 800 — slightly darker for hover */
   --secondary: #3B82F6;
   /* Blue 500 */
 
   /* Section accent colors */
   --accent-livestock: #F59E0B;
-  --accent-crops: #22C55E;
+  --accent-crops: #4D7C0F;
   --accent-produce: #0EA5E9;
   --accent-workforce: #6366F1;
   --accent-commerce: #F43F5E;
@@ -30,7 +30,7 @@
   /* Gray 700 */
   --danger: #EF4444;
   /* Red 500 */
-  --success: #10B981;
+  --success: #4D7C0F;
   --warning: #F59E0B;
   --info: #3B82F6;
 
@@ -40,6 +40,13 @@
   --radius: 0.75rem;
   --radius-sm: 0.5rem;
   --radius-lg: 1rem;
+}
+
+/* Global resets — prevent input overflow inside grid/flex containers */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 [data-theme='light'] {
@@ -84,13 +91,13 @@ body {
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 4px rgba(132, 204, 22, 0.3);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--primary-hover), #047857);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 8px rgba(132, 204, 22, 0.4);
 }
 
 .btn-secondary {
@@ -110,6 +117,7 @@ body {
 
 .input {
   width: 100%;
+  max-width: 100%;
   padding: 0.625rem 0.875rem;
   background-color: var(--bg-main);
   border: 1px solid var(--border);
@@ -117,12 +125,42 @@ body {
   color: var(--text-main);
   outline: none;
   font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  line-height: 1.4;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  border-color: var(--text-muted);
 }
 
 .input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.15);
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
 }
 
 .card {
@@ -131,11 +169,16 @@ body {
   border-radius: var(--radius);
   padding: 1.5rem;
   box-shadow: var(--shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .card:hover {
   box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+}
+
+.card-interactive {
+  cursor: pointer;
 }
 
 .card-interactive:hover {
@@ -183,8 +226,8 @@ body {
 }
 
 .badge-success {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
+  background: rgba(77, 124, 15, 0.1);
+  color: #4D7C0F;
 }
 
 .badge-warning {
@@ -250,7 +293,7 @@ body {
   height: 3px;
 }
 
-.stat-card[data-accent="green"]::before { background: linear-gradient(90deg, #10B981, #22C55E); }
+.stat-card[data-accent="green"]::before { background: linear-gradient(90deg, #84CC16, #4D7C0F); }
 .stat-card[data-accent="amber"]::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
 .stat-card[data-accent="blue"]::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
 .stat-card[data-accent="red"]::before { background: linear-gradient(90deg, #EF4444, #F87171); }
@@ -358,6 +401,60 @@ body {
   letter-spacing: 0.025em;
 }
 
+/* Modal form utilities — consistent layout for all modal dialogs */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-form .form-label,
+.modal-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  .form-row-2,
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.modal-actions .btn {
+  min-width: 120px;
+}
+
 /* Image upload */
 .image-upload {
   border: 2px dashed var(--border);
@@ -370,7 +467,7 @@ body {
 
 .image-upload:hover {
   border-color: var(--primary);
-  background-color: rgba(16, 185, 129, 0.05);
+  background-color: rgba(132, 204, 22, 0.05);
 }
 
 .image-upload img {
@@ -423,4 +520,118 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* ============================================================
+   RESPONSIVE / MOBILE UTILITIES
+   Single source of truth so every page behaves the same.
+   ============================================================ */
+
+/* Visibility helpers — used across all pages.
+   `!important` is required because pages inline `style={{display:'none'}}`
+   as the default state, and inline styles otherwise win. */
+.mobile-only { display: none !important; }
+.desktop-only { display: block !important; }
+
+@media (max-width: 767px) {
+  .mobile-only { display: block !important; }
+  .desktop-only { display: none !important; }
+}
+
+/* Prevent iOS Safari from zooming the page when an input is focused
+   (any input < 16px triggers auto-zoom). */
+@media (max-width: 767px) {
+  .input,
+  input.input,
+  select.input,
+  textarea.input {
+    font-size: 16px;
+  }
+}
+
+/* Auto-collapse common inline grids on small screens.
+   React renders inline `gridTemplateColumns` as `grid-template-columns`
+   in the DOM, so the attribute selector matches. This rescues every
+   modal / form that uses inline 2-col or 3-col grids. */
+@media (max-width: 640px) {
+  [style*="grid-template-columns: 1fr 1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tighter padding on mobile so cards don't eat the screen */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+  }
+  .stat-card {
+    padding: 1rem;
+  }
+  .grid-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .section-header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Tabs scroll horizontally on mobile without overflowing the page */
+@media (max-width: 640px) {
+  .tabs {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 0.6rem 0.9rem; }
+}
+
+/* Tables: always allow horizontal scroll on mobile */
+.table-container { overflow-x: auto; }
+@media (max-width: 640px) {
+  .table-container th,
+  .table-container td {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+}
+
+/* Buttons that sit in tight header rows shouldn't overflow */
+@media (max-width: 480px) {
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Modal: shrink padding + go (near) full-screen on tiny phones */
+@media (max-width: 480px) {
+  .modal-form { gap: 0.875rem; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn { width: 100%; min-width: 0; }
+  .modal-overlay { padding: 0 !important; }
+  .modal-panel {
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    height: 100vh;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+  .modal-body { padding: 1rem !important; }
+}
+
+/* Leave space at the bottom so the fixed bottom-nav never overlaps content */
+@media (max-width: 767px) {
+  .main-content > div {
+    padding-bottom: 6rem !important;
+  }
 }

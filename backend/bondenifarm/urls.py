@@ -3,12 +3,17 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import re_path
-from django.views.static import serve
 from django.shortcuts import render
-import os
+from django.http import JsonResponse
+
+
+def health_check(request):
+    return JsonResponse({'status': 'ok'})
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('health/', health_check, name='health-check'),
     path('api/', include('users.urls')),
     path('api/', include('core.urls')),
     path('api/', include('livestock.urls')),

@@ -8,9 +8,18 @@ interface ModalProps {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
+    /** Modal width preset. Defaults to 'md' (560px). */
+    size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+const SIZE_MAP: Record<NonNullable<ModalProps['size']>, string> = {
+    sm: '420px',
+    md: '560px',
+    lg: '720px',
+    xl: '960px',
+};
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
     const [render, setRender] = useState(isOpen);
@@ -21,24 +30,37 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         }
     }, [isOpen]);
 
+    // Lock body scroll while modal is open + close on Escape
+    useEffect(() => {
+        if (!isOpen) return;
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [isOpen, onClose]);
+
     useGSAP(() => {
         if (isOpen && render) {
-            // Animate In
             gsap.fromTo(overlayRef.current,
                 { opacity: 0 },
-                { opacity: 1, duration: 0.3, ease: 'power2.out' }
+                { opacity: 1, duration: 0.25, ease: 'power2.out' }
             );
             gsap.fromTo(modalRef.current,
-                { opacity: 0, scale: 0.9, y: 20 },
-                { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'back.out(1.2)', delay: 0.1 }
+                { opacity: 0, scale: 0.96, y: 16 },
+                { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'back.out(1.2)', delay: 0.05 }
             );
         } else if (!isOpen && render) {
-            // Animate Out
             const tl = gsap.timeline({
                 onComplete: () => setRender(false)
             });
-            tl.to(modalRef.current, { opacity: 0, scale: 0.95, y: 10, duration: 0.2, ease: 'power2.in' })
-                .to(overlayRef.current, { opacity: 0, duration: 0.2 }, "-=0.1");
+            tl.to(modalRef.current, { opacity: 0, scale: 0.96, y: 8, duration: 0.18, ease: 'power2.in' })
+                .to(overlayRef.current, { opacity: 0, duration: 0.18 }, '-=0.1');
         }
     }, [isOpen, render]);
 
@@ -47,16 +69,22 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     return (
         <div
             ref={overlayRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className="modal-overlay"
             style={{
                 position: 'fixed',
                 inset: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backgroundColor: 'rgba(0, 0, 0, 0.55)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '1rem',
                 zIndex: 100,
-                backdropFilter: 'blur(5px)',
-                opacity: 0 // Start hidden for GSAP to handle
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                opacity: 0,
             }}
             onClick={(e) => {
                 if (e.target === overlayRef.current) onClose();
@@ -64,40 +92,80 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         >
             <div
                 ref={modalRef}
-                className="card"
+                className="modal-panel"
                 style={{
                     width: '100%',
-                    maxWidth: '500px',
-                    margin: '1rem',
-                    maxHeight: '90vh',
-                    overflowY: 'auto',
-                    opacity: 0, // Start hidden
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    maxWidth: SIZE_MAP[size],
+                    maxHeight: 'calc(100vh - 2rem)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    opacity: 0,
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border)',
-                    backgroundColor: 'var(--bg-card)'
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 10px 20px -5px rgba(0, 0, 0, 0.15)',
+                    overflow: 'hidden',
                 }}
             >
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1.5rem',
-                    borderBottom: '1px solid var(--border)',
-                    paddingBottom: '1rem'
-                }}>
-                    <h3 style={{ margin: 0 }}>{title}</h3>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '1.25rem 1.5rem',
+                        borderBottom: '1px solid var(--border)',
+                        background: 'var(--bg-card)',
+                        flexShrink: 0,
+                    }}
+                >
+                    <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, lineHeight: 1.3 }}>
+                        {title}
+                    </h3>
                     <button
                         onClick={onClose}
-                        className="btn"
-                        style={{ padding: '0.5rem', background: 'transparent', color: 'var(--text-muted)' }}
+                        aria-label="Close"
+                        type="button"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '36px',
+                            height: '36px',
+                            padding: 0,
+                            background: 'transparent',
+                            color: 'var(--text-muted)',
+                            border: '1px solid transparent',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-card-hover)';
+                            e.currentTarget.style.color = 'var(--text-main)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                        }}
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
-                {children}
+                <div
+                    className="modal-body"
+                    style={{
+                        padding: '1.5rem',
+                        overflowY: 'auto',
+                        flex: 1,
+                        minHeight: 0,
+                    }}
+                >
+                    {children}
+                </div>
             </div>
         </div>
     );
 };
 
 export default Modal;
+

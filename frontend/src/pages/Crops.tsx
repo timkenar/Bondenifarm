@@ -3,6 +3,7 @@ import { Wheat, Plus, Calendar, Sprout, Scissors } from 'lucide-react';
 import api from '../api/axios';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
+import FarmPlotsManager, { type FarmPlot } from '../components/FarmPlotsManager';
 
 interface CropSeason {
     id: string;
@@ -19,23 +20,13 @@ interface CropSeason {
     plot: string;
 }
 
-interface FarmPlot {
-    id: string;
-    name: string;
-    size_acres: number;
-    soil_type: string;
-    current_crop: string;
-    status: string;
-    photo: string | null;
-}
-
 const statusColors: Record<string, string> = {
     PLANNING: '#64748B',
     PLANTED: '#3B82F6',
-    GROWING: '#22C55E',
+    GROWING: '#4D7C0F',
     FLOWERING: '#F59E0B',
     HARVESTING: '#8B5CF6',
-    COMPLETED: '#10B981',
+    COMPLETED: '#4D7C0F',
     FAILED: '#EF4444',
 };
 
@@ -60,19 +51,36 @@ const CropsPage: React.FC = () => {
         fetchData();
     }, []);
 
-    const fetchData = async () => {
+    const fetchPlots = async () => {
         try {
-            const [seasonsRes, plotsRes] = await Promise.all([
-                api.get('/crops/seasons/'),
-                api.get('/farm/plots/')
-            ]);
-            setSeasons(seasonsRes.data);
-            setPlots(plotsRes.data);
+            const res = await api.get('/farm/plots/');
+            const data = res.data;
+            setPlots(Array.isArray(data) ? data : data.results || []);
         } catch (error) {
-            console.error('Error fetching crops data', error);
-        } finally {
-            setLoading(false);
+            console.error('Error fetching plots', error);
         }
+    };
+
+    const fetchSeasons = async () => {
+        try {
+            const res = await api.get('/crops/seasons/');
+            const data = res.data;
+            setSeasons(Array.isArray(data) ? data : data.results || []);
+        } catch (error) {
+            console.error('Error fetching crop seasons', error);
+        }
+    };
+
+    const fetchData = async () => {
+        // Independent fetches so one failure doesn't blank the other
+        await Promise.allSettled([fetchSeasons(), fetchPlots()]);
+        setLoading(false);
+    };
+
+    const openAddModal = () => {
+        // Refresh plot list right when opening the modal so newly added plots appear
+        fetchPlots();
+        setShowAddModal(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -100,7 +108,7 @@ const CropsPage: React.FC = () => {
             {/* Section Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div className="section-header" style={{ marginBottom: 0 }}>
-                    <div className="icon-badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
+                    <div className="icon-badge" style={{ background: 'rgba(77, 124, 15, 0.1)', color: '#4D7C0F' }}>
                         <Wheat size={24} />
                     </div>
                     <div>
@@ -110,7 +118,7 @@ const CropsPage: React.FC = () => {
                         </p>
                     </div>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                <button className="btn btn-primary" onClick={openAddModal}>
                     <Plus size={16} /> New Season
                 </button>
             </div>
@@ -134,12 +142,12 @@ const CropsPage: React.FC = () => {
                 <div>
                     {seasons.length === 0 ? (
                         <div className="empty-state">
-                            <div className="icon" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
-                                <Wheat size={32} color="#22C55E" />
+                            <div className="icon" style={{ background: 'rgba(77, 124, 15, 0.1)' }}>
+                                <Wheat size={32} color="#4D7C0F" />
                             </div>
                             <h3>No Crop Seasons Yet</h3>
                             <p>Start by creating your first crop season to track planting and harvests.</p>
-                            <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                            <button className="btn btn-primary" onClick={openAddModal}>
                                 <Plus size={16} /> Create First Season
                             </button>
                         </div>
@@ -196,52 +204,12 @@ const CropsPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Plots Tab */}
+            {/* Plots Tab — full plot management (shared with Settings) */}
             {activeTab === 'plots' && (
-                <div>
-                    {plots.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="icon" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
-                                <Sprout size={32} color="#22C55E" />
-                            </div>
-                            <h3>No Farm Plots Registered</h3>
-                            <p>Add your farm plots from the Settings page to start tracking crops by location.</p>
-                        </div>
-                    ) : (
-                        <div className="grid-cards">
-                            {plots.map((plot) => (
-                                <div key={plot.id} className="card card-interactive">
-                                    {plot.photo ? (
-                                        <div style={{ margin: '-1.5rem -1.5rem 1rem', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius) var(--radius) 0 0' }}>
-                                            <img src={plot.photo} alt={plot.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                    ) : (
-                                        <div style={{
-                                            margin: '-1.5rem -1.5rem 1rem', height: '100px', overflow: 'hidden',
-                                            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1))',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}>
-                                            <Sprout size={40} color="#22C55E" style={{ opacity: 0.5 }} />
-                                        </div>
-                                    )}
-
-                                    <h3 style={{ margin: '0 0 0.5rem' }}>{plot.name}</h3>
-                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                        <span>{plot.size_acres} acres</span>
-                                        <span>•</span>
-                                        <span>{plot.soil_type}</span>
-                                    </div>
-                                    {plot.current_crop && (
-                                        <span className="badge badge-success">{plot.current_crop}</span>
-                                    )}
-                                    <span className="badge" style={{ marginLeft: '0.5rem', background: 'var(--bg-main)', color: 'var(--text-muted)' }}>
-                                        {plot.status}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                <FarmPlotsManager
+                    showHeader={false}
+                    onChange={(latest) => setPlots(latest)}
+                />
             )}
 
             {/* Add Season Modal */}

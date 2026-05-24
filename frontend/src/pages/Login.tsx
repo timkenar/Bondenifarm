@@ -68,7 +68,7 @@ const Login: React.FC = () => {
             if (formRef.current) {
                 gsap.to(formRef.current, {
                     opacity: 0, y: -20, duration: 0.3, ease: 'power2.in',
-                    onComplete: () => navigate('/')
+                    onComplete: () => { navigate('/'); }
                 });
             } else {
                 navigate('/');
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
             // Shake animation on error
             if (formRef.current) {
                 gsap.to(formRef.current, {
-                    x: [-8, 8, -6, 6, -3, 3, 0],
+                    keyframes: { x: [-8, 8, -6, 6, -3, 3, 0] },
                     duration: 0.5,
                     ease: 'power2.out'
                 });
@@ -92,22 +92,22 @@ const Login: React.FC = () => {
             {/* Floating background decorations */}
             <div ref={floatingRef} className="login-floating-bg">
                 <div className="floating-icon" style={{ top: '10%', left: '10%' }}>
-                    <Leaf size={32} style={{ opacity: 0.15, color: '#22C55E' }} />
+                    <Leaf size={32} style={{ opacity: 0.15, color: '#4D7C0F' }} />
                 </div>
                 <div className="floating-icon" style={{ top: '20%', right: '15%' }}>
                     <Sun size={28} style={{ opacity: 0.12, color: '#F59E0B' }} />
                 </div>
                 <div className="floating-icon" style={{ bottom: '30%', left: '8%' }}>
-                    <Wheat size={36} style={{ opacity: 0.1, color: '#10B981' }} />
+                    <Wheat size={36} style={{ opacity: 0.1, color: '#4D7C0F' }} />
                 </div>
                 <div className="floating-icon" style={{ bottom: '15%', right: '12%' }}>
                     <CloudRain size={30} style={{ opacity: 0.1, color: '#3B82F6' }} />
                 </div>
                 <div className="floating-icon" style={{ top: '50%', left: '5%' }}>
-                    <Sprout size={24} style={{ opacity: 0.12, color: '#10B981' }} />
+                    <Sprout size={24} style={{ opacity: 0.12, color: '#4D7C0F' }} />
                 </div>
                 <div className="floating-icon" style={{ top: '40%', right: '5%' }}>
-                    <Leaf size={20} style={{ opacity: 0.08, color: '#22C55E' }} />
+                    <Leaf size={20} style={{ opacity: 0.08, color: '#4D7C0F' }} />
                 </div>
             </div>
 
@@ -219,7 +219,7 @@ const Login: React.FC = () => {
                 }
 
                 [data-theme='light'] .login-page {
-                    background: linear-gradient(160deg, #ECFDF5 0%, #F0FDF4 30%, #F8FAFC 100%);
+                    background: linear-gradient(160deg, #F7FEE7 0%, #F7FEE7 30%, #F8FAFC 100%);
                 }
 
                 .login-floating-bg {
@@ -256,25 +256,25 @@ const Login: React.FC = () => {
                     width: 72px;
                     height: 72px;
                     border-radius: 50%;
-                    background: linear-gradient(135deg, #10B981, #059669);
+                    background: linear-gradient(135deg, #4D7C0F, #4D7C0F);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3),
-                                0 0 0 4px rgba(16, 185, 129, 0.1);
+                    box-shadow: 0 8px 32px rgba(77, 124, 15, 0.3),
+                                0 0 0 4px rgba(77, 124, 15, 0.1);
                     animation: pulse-glow 3s ease-in-out infinite;
                 }
 
                 @keyframes pulse-glow {
-                    0%, 100% { box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3), 0 0 0 4px rgba(16, 185, 129, 0.1); }
-                    50% { box-shadow: 0 8px 40px rgba(16, 185, 129, 0.5), 0 0 0 8px rgba(16, 185, 129, 0.05); }
+                    0%, 100% { box-shadow: 0 8px 32px rgba(77, 124, 15, 0.3), 0 0 0 4px rgba(77, 124, 15, 0.1); }
+                    50% { box-shadow: 0 8px 40px rgba(77, 124, 15, 0.5), 0 0 0 8px rgba(77, 124, 15, 0.05); }
                 }
 
                 .login-title {
                     font-size: 1.75rem;
                     font-weight: 700;
                     margin: 0;
-                    background: linear-gradient(135deg, #10B981, #22C55E);
+                    background: linear-gradient(135deg, #4D7C0F, #4D7C0F);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
@@ -303,7 +303,7 @@ const Login: React.FC = () => {
 
                 .login-card-accent {
                     height: 4px;
-                    background: linear-gradient(90deg, #10B981, #22C55E, #059669);
+                    background: linear-gradient(90deg, #4D7C0F, #4D7C0F, #4D7C0F);
                 }
 
                 .login-card-content {
@@ -362,8 +362,8 @@ const Login: React.FC = () => {
                 }
 
                 .login-input:focus {
-                    border-color: #10B981;
-                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+                    border-color: #4D7C0F;
+                    box-shadow: 0 0 0 3px rgba(77, 124, 15, 0.15);
                     background: var(--bg-card);
                 }
 
@@ -411,7 +411,7 @@ const Login: React.FC = () => {
                     padding: 0.9rem;
                     border: none;
                     border-radius: 0.75rem;
-                    background: linear-gradient(135deg, #10B981, #059669);
+                    background: linear-gradient(135deg, #4D7C0F, #4D7C0F);
                     color: white;
                     font-size: 1rem;
                     font-weight: 600;
@@ -421,13 +421,13 @@ const Login: React.FC = () => {
                     justify-content: center;
                     gap: 0.5rem;
                     transition: transform 0.2s, box-shadow 0.2s;
-                    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+                    box-shadow: 0 4px 15px rgba(77, 124, 15, 0.3);
                     margin-top: 0.5rem;
                 }
 
                 .login-btn:hover:not(:disabled) {
                     transform: translateY(-1px);
-                    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+                    box-shadow: 0 6px 20px rgba(77, 124, 15, 0.4);
                 }
 
                 .login-btn:active:not(:disabled) {

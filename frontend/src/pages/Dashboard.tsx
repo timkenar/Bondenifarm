@@ -101,11 +101,11 @@ const Dashboard: React.FC = () => {
         { label: 'Farm Workers', value: stats?.totalWorkers || 0, icon: <Users size={24} />, accent: 'indigo', color: '#6366F1', link: '/workforce' },
         { label: "Today's Milk", value: `${stats?.dailyMilk || 0} L`, icon: <Milk size={24} />, accent: 'blue', color: '#3B82F6', link: '/produce' },
         { label: "Today's Eggs", value: stats?.dailyEggs || 0, icon: <Egg size={24} />, accent: 'amber', color: '#F59E0B', link: '/produce' },
-        { label: 'Farm Plots', value: `${stats?.totalPlots || 0} (${stats?.totalAcreage?.toFixed(1) || 0} acres)`, icon: <MapPin size={24} />, accent: 'green', color: '#22C55E', link: '/settings' },
-        { label: 'Active Crops', value: stats?.activeCrops || 0, icon: <Wheat size={24} />, accent: 'green', color: '#22C55E', link: '/crops' },
-        { label: 'Total Revenue', value: `KES ${(stats?.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={24} />, accent: 'green', color: '#10B981', link: '/commerce' },
+        { label: 'Farm Plots', value: `${stats?.totalPlots || 0} (${stats?.totalAcreage?.toFixed(1) || 0} acres)`, icon: <MapPin size={24} />, accent: 'green', color: '#4D7C0F', link: '/settings' },
+        { label: 'Active Crops', value: stats?.activeCrops || 0, icon: <Wheat size={24} />, accent: 'green', color: '#4D7C0F', link: '/crops' },
+        { label: 'Total Revenue', value: `KES ${(stats?.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={24} />, accent: 'green', color: '#4D7C0F', link: '/commerce' },
         { label: 'Total Expenses', value: `KES ${(stats?.totalExpenses || 0).toLocaleString()}`, icon: <TrendingDown size={24} />, accent: 'red', color: '#EF4444', link: '/commerce' },
-        { label: 'Net Profit', value: `KES ${netProfit.toLocaleString()}`, icon: netProfit >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />, accent: netProfit >= 0 ? 'green' : 'red', color: netProfit >= 0 ? '#10B981' : '#EF4444', link: '/commerce' },
+        { label: 'Net Profit', value: `KES ${netProfit.toLocaleString()}`, icon: netProfit >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />, accent: netProfit >= 0 ? 'green' : 'red', color: netProfit >= 0 ? '#4D7C0F' : '#EF4444', link: '/commerce' },
         { label: 'Low Stock Items', value: stats?.lowStockItems || 0, icon: <AlertTriangle size={24} />, accent: stats?.lowStockItems ? 'red' : 'green', color: stats?.lowStockItems ? '#EF4444' : '#9CA3AF', link: '/inventory' },
     ];
 
@@ -114,12 +114,12 @@ const Dashboard: React.FC = () => {
             {/* Welcome Banner */}
             <div className="card" style={{
                 marginBottom: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.05))',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
+                background: 'linear-gradient(135deg, rgba(77, 124, 15, 0.1), rgba(59, 130, 246, 0.05))',
+                border: '1px solid rgba(77, 124, 15, 0.2)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '12px' }}>
-                        <Sprout size={28} color="#10B981" />
+                    <div style={{ padding: '0.75rem', background: 'rgba(77, 124, 15, 0.15)', borderRadius: '12px' }}>
+                        <Sprout size={28} color="#4D7C0F" />
                     </div>
                     <div>
                         <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Welcome to Bondeni Farm</h2>
@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }}></div>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4D7C0F' }}></div>
                             Recent Sales
                         </h3>
                         <Link to="/commerce" style={{ color: 'var(--primary)', fontSize: '0.875rem' }}>View All</Link>
@@ -178,7 +178,7 @@ const Dashboard: React.FC = () => {
                                         <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{sale.product}</div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{sale.date}</div>
                                     </div>
-                                    <div style={{ fontWeight: 'bold', color: '#10B981', fontSize: '0.9rem' }}>
+                                    <div style={{ fontWeight: 'bold', color: '#4D7C0F', fontSize: '0.9rem' }}>
                                         KES {parseFloat(sale.total_amount).toLocaleString()}
                                     </div>
                                 </div>

@@ -206,7 +206,7 @@ const InventoryPage: React.FC = () => {
                     </div>
                 </div>
                 <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--primary)' }}>
+                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: 'rgba(77, 124, 15, 0.2)', color: 'var(--primary)' }}>
                         <Package size={24} />
                     </div>
                     <div>
@@ -388,7 +388,7 @@ const InventoryPage: React.FC = () => {
                                             padding: '0.125rem 0.5rem',
                                             borderRadius: '4px',
                                             fontSize: '0.7rem',
-                                            backgroundColor: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                            backgroundColor: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                             color: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'var(--primary)' : 'var(--danger)'
                                         }}>{tool.condition}</span>
                                     </div>
@@ -432,7 +432,7 @@ const InventoryPage: React.FC = () => {
                                                     padding: '0.25rem 0.5rem',
                                                     borderRadius: '4px',
                                                     fontSize: '0.75rem',
-                                                    backgroundColor: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                                    backgroundColor: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                                     color: tool.condition === 'GOOD' || tool.condition === 'NEW' ? 'var(--primary)' : 'var(--danger)'
                                                 }}>{tool.condition}</span>
                                             </td>

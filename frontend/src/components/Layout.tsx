@@ -154,7 +154,7 @@ const Layout: React.FC = () => {
 
             {/* Main Content */}
             <main style={{ flex: 1, marginLeft: '0' }} className="main-content">
-                <header style={{
+                <header className="app-header" style={{
                     height: '64px',
                     borderBottom: '1px solid var(--border)',
                     display: 'flex',
@@ -192,11 +192,12 @@ const Layout: React.FC = () => {
                         className={`bottom-nav-item ${location.pathname === item.path ? 'active' : ''}`}
                     >
                         {item.icon}
-
+                        <span className="bottom-nav-label">{item.label}</span>
                     </Link>
                 ))}
-                <button onClick={handleLogout} className="bottom-nav-item" style={{ color: 'var(--danger)', background: 'none', border: 'none' }}>
+                <button onClick={handleLogout} className="bottom-nav-item" style={{ color: 'var(--danger)' }}>
                     <LogOut size={20} />
+                    <span className="bottom-nav-label">Logout</span>
                 </button>
             </div>
 
@@ -215,11 +216,15 @@ const Layout: React.FC = () => {
                         background-color: var(--bg-card);
                         border-top: 1px solid var(--border);
                         justify-content: space-around;
-                        padding: 0.75rem 0;
+                        align-items: center;
+                        padding: 0.5rem 0.25rem;
+                        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0));
                         z-index: 100;
-                        height: 60px;
                         box-sizing: border-box;
+                        overflow-x: auto;
+                        scrollbar-width: none;
                     }
+                    .bottom-nav::-webkit-scrollbar { display: none; }
                     .bottom-nav-item {
                         display: flex;
                         flex-direction: column;
@@ -227,17 +232,39 @@ const Layout: React.FC = () => {
                         justify-content: center;
                         color: var(--text-muted);
                         text-decoration: none;
-                        font-size: 0.75rem;
+                        font-size: 0.65rem;
                         gap: 2px;
+                        padding: 0.4rem 0.55rem;
+                        min-width: 48px;
+                        flex-shrink: 0;
+                        border-radius: var(--radius-sm);
+                        cursor: pointer;
+                        background: none;
+                        border: none;
                     }
                     .bottom-nav-item.active {
                         color: var(--primary);
+                        background: rgba(77, 124, 15, 0.08);
+                    }
+                    .bottom-nav-label {
+                        font-size: 0.625rem;
+                        line-height: 1;
                     }
                     .sidebar-desktop {
                         display: none !important;
                     }
                     .mobile-toggle {
                         display: none !important;
+                    }
+                    .app-header {
+                        padding: 0 0.75rem !important;
+                    }
+                    .app-header h2 {
+                        font-size: 1rem !important;
+                    }
+                    .main-content > div {
+                        padding: 1rem !important;
+                        padding-bottom: 6rem !important;
                     }
                 }
 

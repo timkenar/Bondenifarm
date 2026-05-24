@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 import type { Livestock } from '../types/livestock';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import ActionMenu from '../components/ActionMenu';
-import { Search, Plus, Download, Beef } from 'lucide-react';
+import { Search, Plus, Download, Beef, Image as ImageIcon, X } from 'lucide-react';
 
 const LivestockPage: React.FC = () => {
     const [livestock, setLivestock] = useState<Livestock[]>([]);
@@ -12,6 +12,10 @@ const LivestockPage: React.FC = () => {
     const [filter, setFilter] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAnimal, setEditingAnimal] = useState<Livestock | null>(null);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState({
         tag_id: '',
         name: '',
@@ -44,8 +48,12 @@ const LivestockPage: React.FC = () => {
     };
 
     const handleOpenModal = (animal?: Livestock) => {
+        setPhotoFile(null);
+        setRemoveExistingPhoto(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         if (animal) {
             setEditingAnimal(animal);
+            setPhotoPreview(animal.photo || null);
             setFormData({
                 tag_id: animal.tag_id,
                 name: animal.name,
@@ -63,6 +71,7 @@ const LivestockPage: React.FC = () => {
             });
         } else {
             setEditingAnimal(null);
+            setPhotoPreview(null);
             setFormData({
                 tag_id: '',
                 name: '',
@@ -82,14 +91,56 @@ const LivestockPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        setPhotoFile(file);
+        setRemoveExistingPhoto(false);
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setPhotoPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        } else {
+            setPhotoPreview(editingAnimal?.photo || null);
+        }
+    };
+
+    const clearPhoto = () => {
+        setPhotoFile(null);
+        setPhotoPreview(null);
+        setRemoveExistingPhoto(!!editingAnimal?.photo);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const hasFileChange = !!photoFile || removeExistingPhoto;
+            let payload: FormData | typeof formData;
+            let config: { headers?: Record<string, string> } = {};
+
+            if (hasFileChange) {
+                const fd = new FormData();
+                Object.entries(formData).forEach(([k, v]) => {
+                    if (v !== '' && v !== null && v !== undefined) {
+                        fd.append(k, String(v));
+                    }
+                });
+                if (photoFile) {
+                    fd.append('photo', photoFile);
+                } else if (removeExistingPhoto) {
+                    fd.append('photo', '');
+                }
+                payload = fd;
+                config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            } else {
+                payload = formData;
+            }
+
             if (editingAnimal) {
-                const res = await api.put(`/livestock/${editingAnimal.id}/`, formData);
+                const res = await api.patch(`/livestock/${editingAnimal.id}/`, payload, config);
                 setLivestock(livestock.map(l => l.id === editingAnimal.id ? res.data : l));
             } else {
-                const res = await api.post('/livestock/', formData);
+                const res = await api.post('/livestock/', payload, config);
                 setLivestock([...livestock, res.data]);
             }
             setIsModalOpen(false);
@@ -156,7 +207,7 @@ const LivestockPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                 {Object.entries(speciesCounts).map(([species, count]) => (
                     <div key={species} className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ padding: '0.5rem', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--primary)' }}>
+                        <div style={{ padding: '0.5rem', borderRadius: '50%', background: 'rgba(77, 124, 15, 0.2)', color: 'var(--primary)' }}>
                             <Beef size={20} />
                         </div>
                         <div>
@@ -188,6 +239,68 @@ const LivestockPage: React.FC = () => {
             {/* Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingAnimal ? "Edit Animal" : "Add Animal"}>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Photo uploader */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Animal Photo</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{
+                                    width: 96,
+                                    height: 96,
+                                    borderRadius: '12px',
+                                    border: '1px dashed var(--border)',
+                                    background: 'var(--bg-main)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    flexShrink: 0,
+                                }}
+                                title={photoPreview ? 'Click to replace photo' : 'Click to upload photo'}
+                            >
+                                {photoPreview ? (
+                                    <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <ImageIcon size={28} color="var(--text-muted)" />
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn"
+                                    style={{ gap: '0.4rem' }}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <ImageIcon size={16} />
+                                    {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                                </button>
+                                {photoPreview && (
+                                    <button
+                                        type="button"
+                                        className="btn"
+                                        style={{ gap: '0.4rem', color: 'var(--danger)' }}
+                                        onClick={clearPhoto}
+                                    >
+                                        <X size={16} />
+                                        Remove
+                                    </button>
+                                )}
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    JPG / PNG, up to ~5 MB.
+                                </p>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handlePhotoChange}
+                            />
+                        </div>
+                    </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Tag ID *</label>
@@ -303,12 +416,12 @@ const LivestockPage: React.FC = () => {
                                         <div style={{ fontWeight: 500 }}>{animal.name || animal.tag_id}</div>
                                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{animal.species} • {animal.category}</div>
                                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                            <span style={{ fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--primary)' }}>Qty: {animal.quantity}</span>
+                                            <span style={{ fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '4px', background: 'rgba(77, 124, 15, 0.1)', color: 'var(--primary)' }}>Qty: {animal.quantity}</span>
                                             <span style={{
                                                 fontSize: '0.75rem',
                                                 padding: '0.125rem 0.5rem',
                                                 borderRadius: '4px',
-                                                background: animal.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                                background: animal.status === 'ACTIVE' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                                 color: animal.status === 'ACTIVE' ? 'var(--primary)' : 'var(--danger)'
                                             }}>{animal.status}</span>
                                         </div>
@@ -343,7 +456,7 @@ const LivestockPage: React.FC = () => {
                                     filteredLivestock.map(animal => (
                                         <tr key={animal.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                             <td style={{ padding: '1rem' }}>
-                                                <span style={{ fontFamily: 'monospace', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--primary)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                                                <span style={{ fontFamily: 'monospace', background: 'rgba(77, 124, 15, 0.1)', color: 'var(--primary)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
                                                     {animal.tag_id}
                                                 </span>
                                             </td>
@@ -370,7 +483,7 @@ const LivestockPage: React.FC = () => {
                                                     borderRadius: '999px',
                                                     fontSize: '0.75rem',
                                                     textTransform: 'capitalize',
-                                                    backgroundColor: animal.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                                    backgroundColor: animal.status === 'ACTIVE' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                                     color: animal.status === 'ACTIVE' ? 'var(--primary)' : 'var(--danger)'
                                                 }}>
                                                     {animal.status.toLowerCase()}

@@ -251,7 +251,7 @@ const CommercePage: React.FC = () => {
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--primary)' }}>
+                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: 'rgba(77, 124, 15, 0.2)', color: 'var(--primary)' }}>
                         <TrendingUp size={24} />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ const CommercePage: React.FC = () => {
                     </div>
                 </div>
                 <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: netProfit >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: netProfit >= 0 ? 'var(--primary)' : 'var(--danger)' }}>
+                    <div style={{ padding: '0.75rem', borderRadius: '50%', background: netProfit >= 0 ? 'rgba(77, 124, 15, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: netProfit >= 0 ? 'var(--primary)' : 'var(--danger)' }}>
                         {netProfit >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
                     </div>
                     <div>
@@ -456,7 +456,7 @@ const CommercePage: React.FC = () => {
                                     <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <div>
                                             <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>KES {parseFloat(sale.total_amount).toLocaleString()}</div>
-                                            <span style={{ fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '99px', background: sale.payment_status === 'PAID' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: sale.payment_status === 'PAID' ? 'var(--primary)' : '#F59E0B' }}>
+                                            <span style={{ fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '99px', background: sale.payment_status === 'PAID' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: sale.payment_status === 'PAID' ? 'var(--primary)' : '#F59E0B' }}>
                                                 {sale.payment_status}
                                             </span>
                                         </div>
@@ -490,7 +490,7 @@ const CommercePage: React.FC = () => {
                                         <td style={{ padding: '1rem', fontWeight: 500, color: 'var(--primary)' }}>KES {parseFloat(sale.total_amount).toLocaleString()}</td>
                                         <td style={{ padding: '1rem' }}>{sale.customer_name || '-'}</td>
                                         <td style={{ padding: '1rem' }}>
-                                            <span style={{ padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', background: sale.payment_status === 'PAID' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: sale.payment_status === 'PAID' ? 'var(--primary)' : '#F59E0B' }}>
+                                            <span style={{ padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', background: sale.payment_status === 'PAID' ? 'rgba(77, 124, 15, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: sale.payment_status === 'PAID' ? 'var(--primary)' : '#F59E0B' }}>
                                                 {sale.payment_status}
                                             </span>
                                         </td>

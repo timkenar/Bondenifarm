@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Farm, FarmPlot
+from .models import Farm, FarmPlot, LandingContent
 
 
 class FarmSerializer(serializers.ModelSerializer):
@@ -14,3 +14,9 @@ class FarmPlotSerializer(serializers.ModelSerializer):
         model = FarmPlot
         fields = '__all__'
         read_only_fields = ['farm']
+
+
+class LandingContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LandingContent
+        fields = '__all__'
