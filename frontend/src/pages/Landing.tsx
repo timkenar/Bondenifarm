@@ -62,11 +62,15 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const Landing: React.FC = () => {
     const [content, setContent] = useState<Record<string, string | null>>({});
+    const [farm, setFarm] = useState<{ name?: string; logo?: string | null } | null>(null);
 
     useEffect(() => {
         axios.get(`${API_BASE}/landing/content/`)
             .then((res) => setContent(res.data || {}))
             .catch(() => { /* fall back to placeholder gradients */ });
+        axios.get(`${API_BASE}/farm/profile/`)
+            .then((res) => setFarm(res.data || null))
+            .catch(() => { /* fall back to default brand */ });
     }, []);
 
     /** Build inline style for a slot — sets backgroundImage if CMS has a URL. */
@@ -91,9 +95,17 @@ const Landing: React.FC = () => {
                 <div className="ld-nav-inner">
                     <Link to="/welcome" className="ld-brand">
                         <span className="ld-brand-icon">
-                            <Sprout size={22} />
+                            {farm?.logo ? (
+                                <img
+                                    src={farm.logo}
+                                    alt={farm.name || 'Farm logo'}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                />
+                            ) : (
+                                <Sprout size={22} />
+                            )}
                         </span>
-                        <span>Bondeni Farms</span>
+                        <span>{farm?.name || 'Bondeni Farms'}</span>
                     </Link>
                     <div className="ld-nav-links">
                         <a href="#features">Features</a>

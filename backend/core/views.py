@@ -22,14 +22,18 @@ def get_landing_content():
 class FarmProfileView(generics.RetrieveUpdateAPIView):
     """Singleton endpoint for the farm profile.
 
-    GET    /api/farm/profile/   -> retrieve
-    PUT    /api/farm/profile/   -> full update
-    PATCH  /api/farm/profile/   -> partial update
+    GET    /api/farm/profile/   -> retrieve (PUBLIC — used by the landing page nav)
+    PUT    /api/farm/profile/   -> full update (authenticated)
+    PATCH  /api/farm/profile/   -> partial update (authenticated)
     """
 
     serializer_class = FarmSerializer
-    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_object(self):
         return get_current_farm()

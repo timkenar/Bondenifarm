@@ -60,6 +60,10 @@
     justify-content: center;
     background: var(--ld-green);
     color: white;
+    overflow: hidden;
+}
+.ld-brand-icon img {
+    background: white;
 }
 .ld-nav-links {
     display: flex;
