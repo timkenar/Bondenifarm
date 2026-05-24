@@ -10,6 +10,7 @@ import WorkforcePage from './pages/Workforce';
 import CommercePage from './pages/Commerce';
 import SettingsPage from './pages/Settings';
 import ProducePage from './pages/Produce';
+import CropsPage from './pages/Crops';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -37,6 +38,7 @@ const AppRoutes: React.FC = () => {
       }>
         <Route index element={<Dashboard />} />
         <Route path="livestock" element={<LivestockPage />} />
+        <Route path="crops" element={<CropsPage />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="workforce" element={<WorkforcePage />} />
         <Route path="commerce" element={<CommercePage />} />

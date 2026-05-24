@@ -14,7 +14,9 @@ import {
     Moon,
     Settings,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Wheat,
+    Milk
 } from 'lucide-react';
 
 const Layout: React.FC = () => {
@@ -39,7 +41,8 @@ const Layout: React.FC = () => {
     const navItems = [
         { path: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
         { path: '/livestock', icon: <Beef size={20} />, label: 'Livestock' },
-        { path: '/produce', icon: <Sprout size={20} />, label: 'Produce' },
+        { path: '/crops', icon: <Wheat size={20} />, label: 'Crops' },
+        { path: '/produce', icon: <Milk size={20} />, label: 'Produce' },
         { path: '/inventory', icon: <Wrench size={20} />, label: 'Inventory' },
         { path: '/workforce', icon: <Users size={20} />, label: 'Workforce' },
         { path: '/commerce', icon: <ShoppingCart size={20} />, label: 'Commerce' },

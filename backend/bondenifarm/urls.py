@@ -10,10 +10,12 @@ import os
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
+    path('api/', include('core.urls')),
     path('api/', include('livestock.urls')),
     path('api/', include('inventory.urls')),
     path('api/', include('workforce.urls')),
     path('api/', include('commerce.urls')),
+    path('api/', include('crops.urls')),
     path('api/produce/', include('produce.urls')),
 ]
 
