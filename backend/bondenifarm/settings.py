@@ -185,6 +185,20 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
+# Dev convenience — always allow the Vite dev server origins when DEBUG=True
+# so the React frontend at http://localhost:5173 can talk to the API without
+# requiring CORS_ALLOWED_ORIGINS to be configured in the local environment.
+if DEBUG:
+    _dev_origins = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]
+    for _o in _dev_origins:
+        if _o not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(_o)
+
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
@@ -192,6 +206,16 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
     if origin.strip()
 ]
+
+if DEBUG:
+    for _o in [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]:
+        if _o not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_o)
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 

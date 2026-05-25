@@ -73,8 +73,21 @@ const Login: React.FC = () => {
             } else {
                 navigate('/');
             }
-        } catch (err) {
-            setError('Invalid credentials. Please try again.');
+        } catch (err: any) {
+            // Distinguish real auth failures from network/CORS issues so the user
+            // (and we) can debug instead of always seeing "Invalid credentials".
+            if (err?.response) {
+                const status = err.response.status;
+                if (status === 400 || status === 401) {
+                    setError('Invalid credentials. Please try again.');
+                } else {
+                    setError(`Login failed (${status}). Please try again.`);
+                }
+            } else if (err?.request) {
+                setError('Cannot reach the server. Check your connection or CORS settings.');
+            } else {
+                setError('Unexpected error. Please try again.');
+            }
             // Shake animation on error
             if (formRef.current) {
                 gsap.to(formRef.current, {
