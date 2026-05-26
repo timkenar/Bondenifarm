@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useThemeLoader } from './hooks/useThemeLoader';
-import { ensureCsrf } from './api/axios';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import LivestockPage from './pages/Livestock';
@@ -31,7 +30,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const AppRoutes: React.FC = () => {
   useThemeLoader();
-  React.useEffect(() => { ensureCsrf(); }, []);
   return (
     <Routes>
       <Route path="/welcome" element={<Landing />} />
