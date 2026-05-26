@@ -61,6 +61,7 @@ const Login: React.FC = () => {
         if (btn) gsap.to(btn, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1 });
 
         try {
+            await ensureCsrf();
             const response = await api.post('/auth/login/', { username: email, password });
             await login(response.data.token);
 
