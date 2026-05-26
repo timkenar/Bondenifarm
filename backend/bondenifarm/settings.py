@@ -219,6 +219,10 @@ if DEBUG:
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# CSRF cookie must be readable by JavaScript so axios can echo it back as the
+# `X-CSRFToken` header. (Default is already False; set explicitly for clarity.)
+CSRF_COOKIE_HTTPONLY = False
+
 # Security settings for production
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -228,6 +232,9 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # Cross-origin cookies need SameSite=None + Secure for modern browsers.
+    SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = 'None'
     SECURE_HSTS_PRELOAD = True
 
 # Logging
