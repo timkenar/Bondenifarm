@@ -62,6 +62,8 @@ const Login: React.FC = () => {
 
         try {
             await ensureCsrf();
+            await ensureCsrf();
+            await ensureCsrf();
             const response = await api.post('/auth/login/', { username: email, password });
             await login(response.data.token);
 
