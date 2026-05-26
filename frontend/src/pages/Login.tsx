@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import api, { ensureCsrf } from '../api/axios';
 import { Sprout, Eye, EyeOff, ArrowRight, Leaf, Sun, CloudRain, Wheat } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -20,9 +20,7 @@ const Login: React.FC = () => {
     const floatingRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Entry animations
         const tl = gsap.timeline();
-
         tl.fromTo(logoRef.current,
             { opacity: 0, y: -30, scale: 0.8 },
             { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: 'back.out(1.7)' }
@@ -33,7 +31,6 @@ const Login: React.FC = () => {
             '-=0.3'
         );
 
-        // Floating background icons animation
         if (floatingRef.current) {
             const icons = floatingRef.current.querySelectorAll('.floating-icon');
             icons.forEach((icon, i) => {
@@ -56,18 +53,14 @@ const Login: React.FC = () => {
         setError('');
         setIsLoading(true);
 
-        // Button press animation
         const btn = e.currentTarget.querySelector('button[type="submit"]');
         if (btn) gsap.to(btn, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1 });
 
         try {
             await ensureCsrf();
-            await ensureCsrf();
-            await ensureCsrf();
             const response = await api.post('/auth/login/', { username: email, password });
             await login(response.data.token);
 
-            // Success animation before navigate
             if (formRef.current) {
                 gsap.to(formRef.current, {
                     opacity: 0, y: -20, duration: 0.3, ease: 'power2.in',
@@ -77,8 +70,6 @@ const Login: React.FC = () => {
                 navigate('/');
             }
         } catch (err: any) {
-            // Distinguish real auth failures from network/CORS issues so the user
-            // (and we) can debug instead of always seeing "Invalid credentials".
             if (err?.response) {
                 const status = err.response.status;
                 if (status === 400 || status === 401) {
@@ -91,7 +82,6 @@ const Login: React.FC = () => {
             } else {
                 setError('Unexpected error. Please try again.');
             }
-            // Shake animation on error
             if (formRef.current) {
                 gsap.to(formRef.current, {
                     keyframes: { x: [-8, 8, -6, 6, -3, 3, 0] },
@@ -105,7 +95,6 @@ const Login: React.FC = () => {
 
     return (
         <div ref={containerRef} className="login-page">
-            {/* Floating background decorations */}
             <div ref={floatingRef} className="login-floating-bg">
                 <div className="floating-icon" style={{ top: '10%', left: '10%' }}>
                     <Leaf size={32} style={{ opacity: 0.15, color: '#4D7C0F' }} />
@@ -127,9 +116,7 @@ const Login: React.FC = () => {
                 </div>
             </div>
 
-            {/* Main content */}
             <div className="login-container">
-                {/* Logo & branding section */}
                 <div ref={logoRef} className="login-header">
                     <div className="login-logo">
                         <div className="login-logo-circle">
@@ -140,17 +127,12 @@ const Login: React.FC = () => {
                     <p className="login-subtitle">Smart Farm Management</p>
                 </div>
 
-                {/* Form card */}
                 <div ref={formRef} className="login-card">
-                    {/* Green accent bar at top (WhatsApp style) */}
                     <div className="login-card-accent" />
-
                     <div className="login-card-content">
                         <h2 className="login-welcome">Welcome back</h2>
                         <p className="login-desc">Sign in to continue managing your farm</p>
-
                         <form onSubmit={handleSubmit} className="login-form">
-                            {/* Email field */}
                             <div className="login-field">
                                 <label className="login-label">Email address</label>
                                 <div className="login-input-wrapper">
@@ -165,8 +147,6 @@ const Login: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
-                            {/* Password field */}
                             <div className="login-field">
                                 <label className="login-label">Password</label>
                                 <div className="login-input-wrapper">
@@ -189,15 +169,11 @@ const Login: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
-
-                            {/* Error message */}
                             {error && (
                                 <div className="login-error">
                                     <span>{error}</span>
                                 </div>
                             )}
-
-                            {/* Submit button */}
                             <button
                                 type="submit"
                                 className="login-btn"
@@ -215,8 +191,6 @@ const Login: React.FC = () => {
                         </form>
                     </div>
                 </div>
-
-                {/* Footer */}
                 <p className="login-footer">
                     Manage livestock, crops & workforce — all in one place
                 </p>
@@ -233,21 +207,17 @@ const Login: React.FC = () => {
                     overflow: hidden;
                     padding: 1rem;
                 }
-
                 [data-theme='light'] .login-page {
                     background: linear-gradient(160deg, #F7FEE7 0%, #F7FEE7 30%, #F8FAFC 100%);
                 }
-
                 .login-floating-bg {
                     position: absolute;
                     inset: 0;
                     pointer-events: none;
                 }
-
                 .floating-icon {
                     position: absolute;
                 }
-
                 .login-container {
                     width: 100%;
                     max-width: 400px;
@@ -256,18 +226,15 @@ const Login: React.FC = () => {
                     align-items: center;
                     z-index: 1;
                 }
-
                 .login-header {
                     text-align: center;
                     margin-bottom: 2rem;
                 }
-
                 .login-logo {
                     display: flex;
                     justify-content: center;
                     margin-bottom: 1rem;
                 }
-
                 .login-logo-circle {
                     width: 72px;
                     height: 72px;
@@ -276,16 +243,13 @@ const Login: React.FC = () => {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow: 0 8px 32px rgba(77, 124, 15, 0.3),
-                                0 0 0 4px rgba(77, 124, 15, 0.1);
+                    box-shadow: 0 8px 32px rgba(77, 124, 15, 0.3), 0 0 0 4px rgba(77, 124, 15, 0.1);
                     animation: pulse-glow 3s ease-in-out infinite;
                 }
-
                 @keyframes pulse-glow {
                     0%, 100% { box-shadow: 0 8px 32px rgba(77, 124, 15, 0.3), 0 0 0 4px rgba(77, 124, 15, 0.1); }
                     50% { box-shadow: 0 8px 40px rgba(77, 124, 15, 0.5), 0 0 0 8px rgba(77, 124, 15, 0.05); }
                 }
-
                 .login-title {
                     font-size: 1.75rem;
                     font-weight: 700;
@@ -295,61 +259,49 @@ const Login: React.FC = () => {
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
                 }
-
                 .login-subtitle {
                     margin: 0.25rem 0 0;
                     color: var(--text-muted);
                     font-size: 0.9rem;
                 }
-
                 .login-card {
                     width: 100%;
                     background: var(--bg-card);
                     border-radius: 1rem;
                     overflow: hidden;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                                0 0 0 1px rgba(255, 255, 255, 0.05);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
                     position: relative;
                 }
-
                 [data-theme='light'] .login-card {
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08),
-                                0 0 0 1px rgba(0, 0, 0, 0.05);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
                 }
-
                 .login-card-accent {
                     height: 4px;
                     background: linear-gradient(90deg, #4D7C0F, #4D7C0F, #4D7C0F);
                 }
-
                 .login-card-content {
                     padding: 2rem;
                 }
-
                 .login-welcome {
                     margin: 0 0 0.25rem;
                     font-size: 1.25rem;
                     font-weight: 600;
                 }
-
                 .login-desc {
                     margin: 0 0 1.75rem;
                     color: var(--text-muted);
                     font-size: 0.875rem;
                 }
-
                 .login-form {
                     display: flex;
                     flex-direction: column;
                     gap: 1.25rem;
                 }
-
                 .login-field {
                     display: flex;
                     flex-direction: column;
                     gap: 0.5rem;
                 }
-
                 .login-label {
                     font-size: 0.8rem;
                     font-weight: 600;
@@ -357,13 +309,11 @@ const Login: React.FC = () => {
                     text-transform: uppercase;
                     letter-spacing: 0.04em;
                 }
-
                 .login-input-wrapper {
                     position: relative;
                     display: flex;
                     align-items: center;
                 }
-
                 .login-input {
                     width: 100%;
                     padding: 0.875rem 1rem;
@@ -376,22 +326,18 @@ const Login: React.FC = () => {
                     transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
                     box-sizing: border-box;
                 }
-
                 .login-input:focus {
                     border-color: #4D7C0F;
                     box-shadow: 0 0 0 3px rgba(77, 124, 15, 0.15);
                     background: var(--bg-card);
                 }
-
                 .login-input::placeholder {
                     color: var(--text-muted);
                     opacity: 0.6;
                 }
-
                 .login-input-password {
                     padding-right: 3rem;
                 }
-
                 .login-eye-btn {
                     position: absolute;
                     right: 0.75rem;
@@ -405,11 +351,9 @@ const Login: React.FC = () => {
                     border-radius: 4px;
                     transition: color 0.2s;
                 }
-
                 .login-eye-btn:hover {
                     color: var(--primary);
                 }
-
                 .login-error {
                     padding: 0.75rem 1rem;
                     background: rgba(239, 68, 68, 0.1);
@@ -421,7 +365,6 @@ const Login: React.FC = () => {
                     align-items: center;
                     gap: 0.5rem;
                 }
-
                 .login-btn {
                     width: 100%;
                     padding: 0.9rem;
@@ -440,21 +383,17 @@ const Login: React.FC = () => {
                     box-shadow: 0 4px 15px rgba(77, 124, 15, 0.3);
                     margin-top: 0.5rem;
                 }
-
                 .login-btn:hover:not(:disabled) {
                     transform: translateY(-1px);
                     box-shadow: 0 6px 20px rgba(77, 124, 15, 0.4);
                 }
-
                 .login-btn:active:not(:disabled) {
                     transform: translateY(0);
                 }
-
                 .login-btn:disabled {
                     opacity: 0.7;
                     cursor: not-allowed;
                 }
-
                 .login-spinner {
                     width: 20px;
                     height: 20px;
@@ -463,11 +402,9 @@ const Login: React.FC = () => {
                     border-radius: 50%;
                     animation: spin 0.7s linear infinite;
                 }
-
                 @keyframes spin {
                     to { transform: rotate(360deg); }
                 }
-
                 .login-footer {
                     margin-top: 1.5rem;
                     color: var(--text-muted);
@@ -475,25 +412,20 @@ const Login: React.FC = () => {
                     text-align: center;
                     opacity: 0.7;
                 }
-
-                /* Mobile responsive — WhatsApp-style full screen */
                 @media (max-width: 480px) {
                     .login-page {
                         padding: 0;
                         align-items: stretch;
                     }
-
                     .login-container {
                         max-width: 100%;
                         min-height: 100vh;
                         justify-content: center;
                     }
-
                     .login-header {
                         margin-bottom: 1.5rem;
                         padding: 0 1rem;
                     }
-
                     .login-card {
                         border-radius: 1.5rem 1.5rem 0 0;
                         flex: 1;
@@ -502,28 +434,22 @@ const Login: React.FC = () => {
                         margin-top: auto;
                         box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
                     }
-
                     .login-card-content {
                         padding: 1.75rem 1.5rem 2.5rem;
                         flex: 1;
                     }
-
                     .login-footer {
                         padding: 0 1.5rem 1.5rem;
                         margin: 0;
                     }
-
                     .login-logo-circle {
                         width: 64px;
                         height: 64px;
                     }
-
                     .login-title {
                         font-size: 1.5rem;
                     }
                 }
-
-                /* Tablet */
                 @media (min-width: 481px) and (max-width: 768px) {
                     .login-container {
                         max-width: 420px;
