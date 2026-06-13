@@ -126,10 +126,10 @@ const Login: React.FC = () => {
             if (cardRef.current) {
                 gsap.to(cardRef.current, {
                     opacity: 0, y: -20, duration: 0.3, ease: 'power2.in',
-                    onComplete: () => { navigate('/'); },
+                    onComplete: () => { navigate('/app', { replace: true }); }
                 });
             } else {
-                navigate('/');
+                navigate('/app', { replace: true });
             }
         } catch (err: any) {
             const status = err?.response?.status;

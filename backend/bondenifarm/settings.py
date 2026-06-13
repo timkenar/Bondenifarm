@@ -11,11 +11,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import re
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 import os
+
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -33,7 +35,44 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+def _get_allowed_hosts():
+    raw_hosts = os.environ.get('ALLOWED_HOSTS') or os.environ.get('DJANGO_ALLOWED_HOSTS') or ''
+    hosts = [host for host in re.split(r'[\s,]+', raw_hosts) if host]
+    for host in ('localhost', '127.0.0.1', '[::1]'):
+        if host not in hosts:
+            hosts.append(host)
+    return hosts
+
+
+def _get_database_config():
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        database_name = os.environ.get('SQL_DATABASE')
+        database_user = os.environ.get('SQL_USER')
+        database_password = os.environ.get('SQL_PASSWORD')
+        database_host = os.environ.get('SQL_HOST')
+        database_port = os.environ.get('SQL_PORT', '5432')
+
+        if all([database_name, database_user, database_password, database_host]):
+            database_url = (
+                f'postgresql://{database_user}:{database_password}'
+                f'@{database_host}:{database_port}/{database_name}'
+            )
+
+    if database_url:
+        return dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+
+    return {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+
+
+ALLOWED_HOSTS = _get_allowed_hosts()
 
 
 # Application definition
@@ -97,11 +136,7 @@ WSGI_APPLICATION = 'bondenifarm.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        env='DATABASE_URL',
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': _get_database_config(),
 }
 
 
