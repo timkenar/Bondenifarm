@@ -16,12 +16,13 @@ import CropsPage from './pages/Crops';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
+  const storedToken = token ?? localStorage.getItem('token');
 
   if (isLoading) {
     return <div className="flex-center h-screen">Loading...</div>;
   }
 
-  if (!token) {
+  if (!storedToken) {
     return <Navigate to="/welcome" replace />;
   }
 
