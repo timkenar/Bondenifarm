@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import type { Sale, Expenditure } from '../types/commerce';
 import type { Consumable } from '../types/inventory';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import ActionMenu from '../components/ActionMenu';
-import { Plus, TrendingUp, TrendingDown, Download, Calendar, AlertCircle } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Plus, TrendingUp, TrendingDown, Download, Calendar, AlertCircle, ShoppingCart } from 'lucide-react';
 
 const CommercePage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
@@ -55,9 +57,9 @@ const CommercePage: React.FC = () => {
                 api.get('/expenditure/'),
                 api.get('/inventory/consumables/')
             ]);
-            setSales(salesRes.data);
-            setExpenditures(expenseRes.data);
-            setConsumables(consumablesRes.data);
+            setSales(toArray<Sale>(salesRes.data));
+            setExpenditures(toArray<Expenditure>(expenseRes.data));
+            setConsumables(toArray<Consumable>(consumablesRes.data));
         } catch (error) {
             console.error("Failed to fetch commerce data", error);
         } finally {
@@ -157,7 +159,7 @@ const CommercePage: React.FC = () => {
                 setSales([res.data, ...sales]);
                 // Refresh consumables to see reduced stock
                 const consumablesRes = await api.get('/inventory/consumables/');
-                setConsumables(consumablesRes.data);
+                setConsumables(toArray<Consumable>(consumablesRes.data));
             }
             setIsSaleModalOpen(false);
         } catch (error) {
@@ -235,18 +237,22 @@ const CommercePage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Commerce</h2>
-                <button
-                    className="btn btn-primary"
-                    style={{ gap: '0.5rem' }}
-                    onClick={() => activeTab === 'sales' ? handleOpenSaleModal() : handleOpenExpenseModal()}
-                >
-                    <Plus size={20} />
-                    {activeTab === 'sales' ? 'Record Sale' : 'Add Expense'}
-                </button>
-            </div>
+            <PageHeader
+                icon={<ShoppingCart size={24} />}
+                accent="#F43F5E"
+                title="Commerce"
+                subtitle={`KES ${totalRevenue.toLocaleString()} revenue · KES ${totalExpenses.toLocaleString()} expenses`}
+                actions={
+                    <>
+                        <button className="btn btn-secondary" style={{ gap: '0.5rem' }} onClick={() => exportToCSV(activeTab === 'sales' ? sales : expenditures, activeTab === 'sales' ? 'sales' : 'expenditures')}>
+                            <Download size={16} /> Export
+                        </button>
+                        <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => activeTab === 'sales' ? handleOpenSaleModal() : handleOpenExpenseModal()}>
+                            <Plus size={18} /> {activeTab === 'sales' ? 'Record Sale' : 'Add Expense'}
+                        </button>
+                    </>
+                }
+            />
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

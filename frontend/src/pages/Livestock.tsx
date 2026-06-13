@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import type { Livestock } from '../types/livestock';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import ActionMenu from '../components/ActionMenu';
+import PageHeader from '../components/PageHeader';
 import { Search, Plus, Download, Beef, Image as ImageIcon, X } from 'lucide-react';
 
 const LivestockPage: React.FC = () => {
@@ -39,7 +41,7 @@ const LivestockPage: React.FC = () => {
     const fetchLivestock = async () => {
         try {
             const response = await api.get('/livestock/');
-            setLivestock(response.data);
+            setLivestock(toArray<Livestock>(response.data));
         } catch (error) {
             console.error("Failed to fetch livestock", error);
         } finally {
@@ -188,20 +190,22 @@ const LivestockPage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Livestock</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn" style={{ gap: '0.5rem', color: 'var(--primary)' }} onClick={exportToCSV}>
-                        <Download size={16} />
-                        Export
-                    </button>
-                    <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => handleOpenModal()}>
-                        <Plus size={20} />
-                        Add Animal
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                icon={<Beef size={24} />}
+                accent="#F59E0B"
+                title="Livestock"
+                subtitle={`${livestock.length} animals · ${Object.keys(speciesCounts).length} species`}
+                actions={
+                    <>
+                        <button className="btn btn-secondary" style={{ gap: '0.5rem' }} onClick={exportToCSV}>
+                            <Download size={16} /> Export
+                        </button>
+                        <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => handleOpenModal()}>
+                            <Plus size={18} /> Add Animal
+                        </button>
+                    </>
+                }
+            />
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

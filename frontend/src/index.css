@@ -635,3 +635,81 @@ select.input {
     padding-bottom: 6rem !important;
   }
 }
+
+/* ============================================================
+   PREMIUM POLISH — sticky glass header + mobile typography
+   ============================================================ */
+
+/* Theme-aware frosted-glass sticky header (works in light + dark) */
+.app-header {
+  background-color: color-mix(in srgb, var(--bg-main) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid color-mix(in srgb, var(--text-main) 8%, transparent) !important;
+}
+
+.app-header-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Premium heading scale — tighter, more confident type on phones */
+@media (max-width: 767px) {
+  /* The PageHeader on each page already shows the title — hide the sticky
+     header's redundant title text so it doesn't repeat on mobile. */
+  .app-header-title {
+    display: none !important;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+
+  /* Softer, larger radius on cards = more premium on small screens */
+  .card {
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Bigger tap targets + comfortable input height (8pt rhythm) */
+  .btn {
+    min-height: 44px;
+    border-radius: 14px;
+  }
+
+  .input,
+  input.input,
+  select.input,
+  textarea.input {
+    min-height: 48px;
+    border-radius: 14px;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Page title rows: stack the title and primary action cleanly */
+  .page-head {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}
+
+/* Micro-interaction: gentle press feedback on every button + card */
+.btn:active {
+  transform: scale(0.97);
+}
+
+.card-interactive:active {
+  transform: scale(0.99);
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

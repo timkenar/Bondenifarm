@@ -4,6 +4,7 @@ import api from '../api/axios';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
 import FarmPlotsManager, { type FarmPlot } from '../components/FarmPlotsManager';
+import PageHeader from '../components/PageHeader';
 
 interface CropSeason {
     id: string;
@@ -105,23 +106,17 @@ const CropsPage: React.FC = () => {
 
     return (
         <div className="animate-in">
-            {/* Section Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div className="section-header" style={{ marginBottom: 0 }}>
-                    <div className="icon-badge" style={{ background: 'rgba(77, 124, 15, 0.1)', color: '#4D7C0F' }}>
-                        <Wheat size={24} />
-                    </div>
-                    <div>
-                        <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Crop Management</h2>
-                        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                            {seasons.length} active seasons • {plots.length} plots
-                        </p>
-                    </div>
-                </div>
-                <button className="btn btn-primary" onClick={openAddModal}>
-                    <Plus size={16} /> New Season
-                </button>
-            </div>
+            <PageHeader
+                icon={<Wheat size={24} />}
+                accent="#4D7C0F"
+                title="Crop Management"
+                subtitle={`${seasons.length} active seasons · ${plots.length} plots`}
+                actions={
+                    <button className="btn btn-primary" onClick={openAddModal}>
+                        <Plus size={16} /> New Season
+                    </button>
+                }
+            />
 
             {/* Tabs */}
             <div className="tabs">

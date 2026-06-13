@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import MobileNav from './MobileNav';
 import {
     LayoutDashboard,
     Beef,
@@ -160,18 +161,15 @@ const Layout: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 1.5rem',
-                    background: 'var(--bg-dark)',
                     justifyContent: 'space-between',
                     position: 'sticky',
                     top: 0,
                     zIndex: 40,
-                    backdropFilter: 'blur(10px)',
-                    backgroundColor: 'rgba(17, 24, 39, 0.8)' // Use variable ideally, but hardcoded for glass effect
                 }}>
                     <button className="btn mobile-toggle" onClick={() => setSidebarOpen(true)} style={{ padding: '0.5rem' }}>
                         <Menu size={24} />
                     </button>
-                    <h2 style={{ fontSize: '1.25rem', margin: 0 }}>
+                    <h2 className="app-header-title" style={{ fontSize: '1.25rem', margin: 0 }}>
                         {navItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
                     </h2>
                     <button className="btn" onClick={toggleTheme} style={{ padding: '0.5rem', color: 'var(--text-main)', marginLeft: 'auto' }}>
@@ -184,72 +182,10 @@ const Layout: React.FC = () => {
             </main>
 
             {/* Bottom Navigation for Mobile */}
-            <div className="bottom-nav">
-                {navItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`bottom-nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                    >
-                        {item.icon}
-                        <span className="bottom-nav-label">{item.label}</span>
-                    </Link>
-                ))}
-                <button onClick={handleLogout} className="bottom-nav-item" style={{ color: 'var(--danger)' }}>
-                    <LogOut size={20} />
-                    <span className="bottom-nav-label">Logout</span>
-                </button>
-            </div>
+            <MobileNav onLogout={handleLogout} />
 
             <style>{`
-                .bottom-nav {
-                    display: none;
-                }
-                
                 @media (max-width: 767px) {
-                    .bottom-nav {
-                        display: flex;
-                        position: fixed;
-                        bottom: 0;
-                        left: 0;
-                        width: 100%;
-                        background-color: var(--bg-card);
-                        border-top: 1px solid var(--border);
-                        justify-content: space-around;
-                        align-items: center;
-                        padding: 0.5rem 0.25rem;
-                        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0));
-                        z-index: 100;
-                        box-sizing: border-box;
-                        overflow-x: auto;
-                        scrollbar-width: none;
-                    }
-                    .bottom-nav::-webkit-scrollbar { display: none; }
-                    .bottom-nav-item {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        color: var(--text-muted);
-                        text-decoration: none;
-                        font-size: 0.65rem;
-                        gap: 2px;
-                        padding: 0.4rem 0.55rem;
-                        min-width: 48px;
-                        flex-shrink: 0;
-                        border-radius: var(--radius-sm);
-                        cursor: pointer;
-                        background: none;
-                        border: none;
-                    }
-                    .bottom-nav-item.active {
-                        color: var(--primary);
-                        background: rgba(77, 124, 15, 0.08);
-                    }
-                    .bottom-nav-label {
-                        font-size: 0.625rem;
-                        line-height: 1;
-                    }
                     .sidebar-desktop {
                         display: none !important;
                     }

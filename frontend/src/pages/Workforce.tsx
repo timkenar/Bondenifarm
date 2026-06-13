@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import type { Worker } from '../types/workforce';
-import { User, Phone, Plus, Briefcase, Download, DollarSign, LayoutGrid, List } from 'lucide-react';
+import { User, Phone, Plus, Briefcase, Download, DollarSign, LayoutGrid, List, Users } from 'lucide-react';
 import Modal from '../components/Modal';
 import ActionMenu from '../components/ActionMenu';
 import Spinner from '../components/Spinner';
+import PageHeader from '../components/PageHeader';
 
 interface Kibarua {
     id: string;
@@ -55,8 +57,8 @@ const WorkforcePage: React.FC = () => {
                 api.get('/workers/'),
                 api.get('/kibarua/')
             ]);
-            setWorkers(workersRes.data);
-            setKibaruaRecords(kibaruaRes.data);
+            setWorkers(toArray<Worker>(workersRes.data));
+            setKibaruaRecords(toArray<Kibarua>(kibaruaRes.data));
         } catch (error) {
             console.error("Failed to fetch workforce data", error);
         } finally {
@@ -155,28 +157,22 @@ const WorkforcePage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Workforce</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                        className="btn"
-                        style={{ gap: '0.5rem', color: 'var(--primary)' }}
-                        onClick={() => exportToCSV(activeTab === 'workers' ? workers : kibaruaRecords, activeTab)}
-                    >
-                        <Download size={16} />
-                        Export
-                    </button>
-                    <button
-                        className="btn btn-primary"
-                        style={{ gap: '0.5rem' }}
-                        onClick={() => activeTab === 'workers' ? handleOpenModal() : setIsKibaruaModalOpen(true)}
-                    >
-                        <Plus size={20} />
-                        {activeTab === 'workers' ? 'Add Worker' : 'Add Kibarua'}
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                icon={<Users size={24} />}
+                accent="#6366F1"
+                title="Workforce"
+                subtitle={`${workers.length} workers · KES ${totalKibaruaPayments.toLocaleString()} kibarua paid`}
+                actions={
+                    <>
+                        <button className="btn btn-secondary" style={{ gap: '0.5rem' }} onClick={() => exportToCSV(activeTab === 'workers' ? workers : kibaruaRecords, activeTab)}>
+                            <Download size={16} /> Export
+                        </button>
+                        <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => activeTab === 'workers' ? handleOpenModal() : setIsKibaruaModalOpen(true)}>
+                            <Plus size={18} /> {activeTab === 'workers' ? 'Add Worker' : 'Add Kibarua'}
+                        </button>
+                    </>
+                }
+            />
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import type { ProduceRecord } from '../types/produce';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import ActionMenu from '../components/ActionMenu';
+import PageHeader from '../components/PageHeader';
 import { Plus, Milk, Egg, Sprout, Download, Calendar } from 'lucide-react';
 
 const ProducePage: React.FC = () => {
@@ -34,7 +36,7 @@ const ProducePage: React.FC = () => {
     const fetchRecords = async () => {
         try {
             const res = await api.get('/produce/records/');
-            setRecords(res.data);
+            setRecords(toArray<ProduceRecord>(res.data));
         } catch (error) {
             console.error("Failed to fetch produce records", error);
         } finally {
@@ -153,20 +155,22 @@ const ProducePage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Farm Produce</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn" style={{ gap: '0.5rem', color: 'var(--primary)' }} onClick={exportToCSV}>
-                        <Download size={16} />
-                        Export
-                    </button>
-                    <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => handleOpenModal()}>
-                        <Plus size={20} />
-                        Record {normalizeType(activeTab)}
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                icon={<Milk size={24} />}
+                accent="#0EA5E9"
+                title="Farm Produce"
+                subtitle={`${records.length} records · ${todayMilk}L milk today · ${todayEggs} eggs today`}
+                actions={
+                    <>
+                        <button className="btn btn-secondary" style={{ gap: '0.5rem' }} onClick={exportToCSV}>
+                            <Download size={16} /> Export
+                        </button>
+                        <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => handleOpenModal()}>
+                            <Plus size={18} /> Record {normalizeType(activeTab)}
+                        </button>
+                    </>
+                }
+            />
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

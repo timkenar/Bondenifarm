@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import type { Tool, Consumable } from '../types/inventory';
 import { Wrench, Package, Search, Plus, AlertTriangle, Download, Image, Camera } from 'lucide-react';
 import Modal from '../components/Modal';
 import ActionMenu from '../components/ActionMenu';
 import Spinner from '../components/Spinner';
+import PageHeader from '../components/PageHeader';
 
 const InventoryPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'tools' | 'consumables'>('tools');
@@ -38,8 +40,8 @@ const InventoryPage: React.FC = () => {
                 api.get('/tools/'),
                 api.get('/consumables/')
             ]);
-            setTools(toolsRes.data);
-            setConsumables(consumablesRes.data);
+            setTools(toArray<Tool>(toolsRes.data));
+            setConsumables(toArray<Consumable>(consumablesRes.data));
         } catch (error) {
             console.error("Failed to fetch inventory", error);
         } finally {
@@ -171,28 +173,22 @@ const InventoryPage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Inventory</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                        className="btn"
-                        style={{ gap: '0.5rem', color: 'var(--primary)' }}
-                        onClick={() => exportToCSV(activeTab === 'tools' ? tools : consumables, activeTab)}
-                    >
-                        <Download size={16} />
-                        Export
-                    </button>
-                    <button
-                        className="btn btn-primary"
-                        style={{ gap: '0.5rem' }}
-                        onClick={() => activeTab === 'tools' ? handleOpenToolModal() : handleOpenConsumableModal()}
-                    >
-                        <Plus size={20} />
-                        Add {activeTab === 'tools' ? 'Tool' : 'Item'}
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                icon={<Wrench size={24} />}
+                accent="#8B5CF6"
+                title="Inventory"
+                subtitle={`${tools.length} tools · ${consumables.length} consumables${lowStockCount ? ` · ⚠ ${lowStockCount} low stock` : ''}`}
+                actions={
+                    <>
+                        <button className="btn btn-secondary" style={{ gap: '0.5rem' }} onClick={() => exportToCSV(activeTab === 'tools' ? tools : consumables, activeTab)}>
+                            <Download size={16} /> Export
+                        </button>
+                        <button className="btn btn-primary" style={{ gap: '0.5rem' }} onClick={() => activeTab === 'tools' ? handleOpenToolModal() : handleOpenConsumableModal()}>
+                            <Plus size={18} /> Add {activeTab === 'tools' ? 'Tool' : 'Item'}
+                        </button>
+                    </>
+                }
+            />
 
             {/* Summary */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

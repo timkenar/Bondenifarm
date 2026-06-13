@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Moon, Sun, Shield, MapPin, Globe, Phone, Image as ImageIcon, Upload, X, Layout } from 'lucide-react';
+import { User, Mail, Moon, Sun, Shield, MapPin, Globe, Phone, Image as ImageIcon, Upload, X, Layout, Settings } from 'lucide-react';
 import api from '../api/axios';
 import FarmPlotsManager from '../components/FarmPlotsManager';
+import PageHeader from '../components/PageHeader';
 
 interface FarmProfile {
     id: string;
@@ -290,7 +291,12 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="animate-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Settings</h2>
+            <PageHeader
+                icon={<Settings size={24} />}
+                accent="#64748B"
+                title="Settings"
+                subtitle="Farm profile, plots, CMS & account"
+            />
 
             {/* Tabs */}
             <div className="tabs">

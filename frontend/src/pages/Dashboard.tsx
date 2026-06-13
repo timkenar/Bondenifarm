@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Beef, TrendingUp, TrendingDown, Egg, Milk, Users, AlertTriangle, Wheat, MapPin, Sprout } from 'lucide-react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
 import Spinner from '../components/Spinner';
+import PageHeader from '../components/PageHeader';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
@@ -39,13 +41,13 @@ const Dashboard: React.FC = () => {
                 api.get('/farm/plots/').catch(() => ({ data: [] }))
             ]);
 
-            const livestock = livestockRes.data;
-            const workers = workersRes.data;
-            const sales = salesRes.data;
-            const expenses = expensesRes.data;
-            const produce = produceRes.data;
-            const consumables = consumablesRes.data;
-            const plots = plotsRes.data;
+            const livestock = toArray<any>(livestockRes.data);
+            const workers = toArray<any>(workersRes.data);
+            const sales = toArray<any>(salesRes.data);
+            const expenses = toArray<any>(expensesRes.data);
+            const produce = toArray<any>(produceRes.data);
+            const consumables = toArray<any>(consumablesRes.data);
+            const plots = toArray<any>(plotsRes.data);
 
             const today = new Date().toISOString().split('T')[0];
 
@@ -111,24 +113,12 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="animate-in">
-            {/* Welcome Banner */}
-            <div className="card" style={{
-                marginBottom: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(77, 124, 15, 0.1), rgba(59, 130, 246, 0.05))',
-                border: '1px solid rgba(77, 124, 15, 0.2)',
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', background: 'rgba(77, 124, 15, 0.15)', borderRadius: '12px' }}>
-                        <Sprout size={28} color="#4D7C0F" />
-                    </div>
-                    <div>
-                        <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Welcome to Bondeni Farm</h2>
-                        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                            Here's an overview of your farm today
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                icon={<Sprout size={24} />}
+                accent="#4D7C0F"
+                title="Bondeni Farm"
+                subtitle="Here's an overview of your farm today"
+            />
 
             {/* Stats Grid */}
             <div className="grid-stats" style={{ marginBottom: '2rem' }}>
