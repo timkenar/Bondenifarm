@@ -126,7 +126,7 @@ const Login: React.FC = () => {
             if (cardRef.current) {
                 gsap.to(cardRef.current, {
                     opacity: 0, y: -20, duration: 0.3, ease: 'power2.in',
-                    onComplete: () => navigate('/'),
+                    onComplete: () => { navigate('/'); },
                 });
             } else {
                 navigate('/');
