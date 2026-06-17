@@ -13,6 +13,7 @@ import CommercePage from './pages/Commerce';
 import SettingsPage from './pages/Settings';
 import ProducePage from './pages/Produce';
 import CropsPage from './pages/Crops';
+import { canAccess } from './config/permissions';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -29,6 +30,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Restrict a page to roles that are allowed to see it. Users who reach a
+// forbidden URL are bounced to their dashboard instead of seeing the page.
+const RoleRoute: React.FC<{ path: string; children: React.ReactNode }> = ({ path, children }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return <div className="flex-center h-screen">Loading...</div>;
+  }
+  if (user && !canAccess(user.role, path)) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
 const AppRoutes: React.FC = () => {
   useThemeLoader();
   return (
@@ -42,13 +56,13 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
-        <Route path="livestock" element={<LivestockPage />} />
-        <Route path="crops" element={<CropsPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="workforce" element={<WorkforcePage />} />
-        <Route path="commerce" element={<CommercePage />} />
-        <Route path="produce" element={<ProducePage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route path="livestock" element={<RoleRoute path="/livestock"><LivestockPage /></RoleRoute>} />
+        <Route path="crops" element={<RoleRoute path="/crops"><CropsPage /></RoleRoute>} />
+        <Route path="inventory" element={<RoleRoute path="/inventory"><InventoryPage /></RoleRoute>} />
+        <Route path="workforce" element={<RoleRoute path="/workforce"><WorkforcePage /></RoleRoute>} />
+        <Route path="commerce" element={<RoleRoute path="/commerce"><CommercePage /></RoleRoute>} />
+        <Route path="produce" element={<RoleRoute path="/produce"><ProducePage /></RoleRoute>} />
+        <Route path="settings" element={<RoleRoute path="/settings"><SettingsPage /></RoleRoute>} />
       </Route>
 
       {/* Backwards-compat: old root + unknown URLs land on the dashboard if signed in,
@@ -59,13 +73,13 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
-        <Route path="livestock" element={<LivestockPage />} />
-        <Route path="crops" element={<CropsPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="workforce" element={<WorkforcePage />} />
-        <Route path="commerce" element={<CommercePage />} />
-        <Route path="produce" element={<ProducePage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route path="livestock" element={<RoleRoute path="/livestock"><LivestockPage /></RoleRoute>} />
+        <Route path="crops" element={<RoleRoute path="/crops"><CropsPage /></RoleRoute>} />
+        <Route path="inventory" element={<RoleRoute path="/inventory"><InventoryPage /></RoleRoute>} />
+        <Route path="workforce" element={<RoleRoute path="/workforce"><WorkforcePage /></RoleRoute>} />
+        <Route path="commerce" element={<RoleRoute path="/commerce"><CommercePage /></RoleRoute>} />
+        <Route path="produce" element={<RoleRoute path="/produce"><ProducePage /></RoleRoute>} />
+        <Route path="settings" element={<RoleRoute path="/settings"><SettingsPage /></RoleRoute>} />
       </Route>
     </Routes>
   );

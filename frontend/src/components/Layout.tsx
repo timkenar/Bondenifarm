@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 import MobileNav from './MobileNav';
+import { filterNavByRole } from '../config/permissions';
 import {
     LayoutDashboard,
     Beef,
@@ -15,7 +17,6 @@ import {
     Moon,
     Settings,
     ChevronLeft,
-    ChevronRight,
     Wheat,
     Milk
 } from 'lucide-react';
@@ -27,6 +28,33 @@ const Layout: React.FC = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Desktop
     const location = useLocation();
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+    const [farmName, setFarmName] = useState('Bondeni Farm');
+    const [farmLogo, setFarmLogo] = useState<string | null>(null);
+
+    useEffect(() => {
+        api.get('/farm/profile/')
+            .then((res) => {
+                if (res.data?.name) setFarmName(res.data.name);
+                if (res.data?.logo) setFarmLogo(res.data.logo);
+            })
+            .catch(() => { /* keep defaults */ });
+    }, []);
+
+    const initials = (farmName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()) || 'BF';
+
+    const logoMark = farmLogo ? (
+        <img src={farmLogo} alt={farmName} style={{ width: '34px', height: '34px', borderRadius: '9px', objectFit: 'cover', flexShrink: 0 }} />
+    ) : (
+        <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sprout color="white" size={20} />
+        </div>
+    );
 
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -39,7 +67,7 @@ const Layout: React.FC = () => {
         navigate('/login');
     };
 
-    const navItems = [
+    const allNavItems = [
         { path: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
         { path: '/livestock', icon: <Beef size={20} />, label: 'Livestock' },
         { path: '/crops', icon: <Wheat size={20} />, label: 'Crops' },
@@ -49,13 +77,14 @@ const Layout: React.FC = () => {
         { path: '/commerce', icon: <ShoppingCart size={20} />, label: 'Commerce' },
         { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
     ];
+    const navItems = filterNavByRole(allNavItems, user?.role);
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
             {/* Sidebar */}
             <aside
                 style={{
-                    width: sidebarCollapsed ? '80px' : '260px',
+                    width: sidebarCollapsed ? '60px' : '195px',
                     backgroundColor: 'var(--bg-card)',
                     borderRight: '1px solid var(--border)',
                     position: 'fixed',
@@ -70,12 +99,35 @@ const Layout: React.FC = () => {
                 }}
                 className="sidebar-desktop"
             >
-                <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: '0.75rem', borderBottom: '1px solid var(--border)', height: '64px', boxSizing: 'border-box' }}>
-                    <Sprout color="var(--primary)" size={24} />
-                    {!sidebarCollapsed && <span style={{ fontWeight: 'bold', fontSize: '1.25rem', whiteSpace: 'nowrap' }}>Bondeni Farm</span>}
+                <div style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'space-between', gap: '0.5rem', borderBottom: '1px solid var(--border)', height: '64px', boxSizing: 'border-box' }}>
+                    {sidebarCollapsed ? (
+                        <button
+                            onClick={() => setSidebarCollapsed(false)}
+                            title="Expand sidebar"
+                            aria-label="Expand sidebar"
+                            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
+                        >
+                            {logoMark}
+                        </button>
+                    ) : (
+                        <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
+                                {logoMark}
+                                <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>{initials}</span>
+                            </div>
+                            <button
+                                onClick={() => setSidebarCollapsed(true)}
+                                title="Collapse sidebar"
+                                aria-label="Collapse sidebar"
+                                style={{ background: 'transparent', border: 'none', padding: '0.3rem', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', borderRadius: '6px' }}
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                        </>
+                    )}
                 </div>
 
-                <nav style={{ flex: 1, padding: '1rem' }}>
+                <nav style={{ flex: 1, padding: sidebarCollapsed ? '1rem 0.5rem' : '1rem' }}>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {navItems.map((item) => (
                             <li key={item.path}>
@@ -86,7 +138,7 @@ const Layout: React.FC = () => {
                                         alignItems: 'center',
                                         justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                                         gap: '0.75rem',
-                                        padding: '0.75rem 1rem',
+                                        padding: sidebarCollapsed ? '0.75rem 0' : '0.75rem 1rem',
                                         borderRadius: 'var(--radius)',
                                         color: location.pathname === item.path ? 'white' : 'var(--text-muted)',
                                         backgroundColor: location.pathname === item.path ? 'var(--primary)' : 'transparent',
@@ -105,43 +157,40 @@ const Layout: React.FC = () => {
                     </ul>
                 </nav>
 
-                <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
-                    {/* Desktop Sidebar Toggle */}
-                    {!sidebarOpen && (
-                        <button
-                            className="btn desktop-toggle"
-                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                            style={{
-                                marginBottom: '1rem',
-                                width: '100%',
-                                justifyContent: 'center',
-                                backgroundColor: 'var(--bg-main)',
-                                color: 'var(--text-muted)'
-                            }}
-                        >
-                            {sidebarCollapsed ? <ChevronRight size={16} /> : <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronLeft size={16} /> <span style={{ fontSize: '0.75rem' }}>Collapse</span></div>}
-                        </button>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-                        <div style={{ width: '32px', height: '32px', minWidth: '32px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                        </div>
-                        {!sidebarCollapsed && (
-                            <div style={{ overflow: 'hidden' }}>
-                                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.full_name || 'User'}</p>
-                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.role}</p>
+                <div style={{ padding: sidebarCollapsed ? '0.75rem 0.5rem' : '1rem', borderTop: '1px solid var(--border)' }}>
+                    {sidebarCollapsed ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            <div title={user?.full_name || 'User'} style={{ width: '36px', height: '36px', minWidth: '36px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.9rem' }}>
+                                {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
                             </div>
-                        )}
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="btn"
-                        style={{ width: '100%', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: '0.75rem', color: 'var(--danger)' }}
-                    >
-                        <LogOut size={20} />
-                        {!sidebarCollapsed && 'Logout'}
-                    </button>
+                            <button
+                                onClick={handleLogout}
+                                title="Logout"
+                                aria-label="Logout"
+                                style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '8px', color: 'var(--danger)', cursor: 'pointer' }}
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem', borderRadius: 'var(--radius)', background: 'var(--bg-main)' }}>
+                            <div style={{ width: '36px', height: '36px', minWidth: '36px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.9rem' }}>
+                                {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                            </div>
+                            <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.full_name || 'User'}</p>
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.role}</p>
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                title="Logout"
+                                aria-label="Logout"
+                                style={{ width: '34px', height: '34px', minWidth: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '8px', color: 'var(--danger)', cursor: 'pointer' }}
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
 
@@ -182,7 +231,7 @@ const Layout: React.FC = () => {
             </main>
 
             {/* Bottom Navigation for Mobile */}
-            <MobileNav onLogout={handleLogout} />
+            <MobileNav onLogout={handleLogout} role={user?.role} />
 
             <style>{`
                 @media (max-width: 767px) {
@@ -209,7 +258,7 @@ const Layout: React.FC = () => {
                         transform: translateX(0) !important;
                     }
                     .main-content {
-                        margin-left: ${sidebarCollapsed ? '80px' : '260px'} !important;
+                        margin-left: ${sidebarCollapsed ? '60px' : '195px'} !important;
                         transition: margin-left 0.3s ease;
                     }
                     .mobile-toggle {

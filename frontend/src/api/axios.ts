@@ -37,6 +37,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // A stale/invalid token causes the server to reject authenticated
+        // requests with 401. Clear it and send the user back to login instead
+        // of failing silently while the UI still thinks it's authenticated.
+        if (error.response?.status === 401 && localStorage.getItem('token')) {
+            localStorage.removeItem('token');
+            if (!window.location.pathname.startsWith('/login')) {
+                window.location.assign('/login');
+            }
+        }
         return Promise.reject(error);
     }
 );

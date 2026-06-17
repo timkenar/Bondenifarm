@@ -15,6 +15,9 @@ import {
     X,
 } from 'lucide-react';
 
+import { filterNavByRole } from '../config/permissions';
+import type { UserRole } from '../types';
+
 export interface MobileNavItem {
     path: string;
     label: string;
@@ -24,33 +27,37 @@ export interface MobileNavItem {
 
 const ICON = 22;
 
-// Four most-used destinations live on the bar; the rest move into the sheet so
-// nothing gets squeezed (WhatsApp-style).
-const primaryItems: MobileNavItem[] = [
+// Full ordered list of destinations. The first few the role can access live on
+// the floating bar; the rest move into the "More" sheet so nothing is squeezed.
+const allItems: MobileNavItem[] = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={ICON} />, accent: '#4D7C0F' },
     { path: '/livestock', label: 'Livestock', icon: <Beef size={ICON} />, accent: '#F59E0B' },
     { path: '/crops', label: 'Crops', icon: <Wheat size={ICON} />, accent: '#22C55E' },
     { path: '/commerce', label: 'Commerce', icon: <ShoppingCart size={ICON} />, accent: '#F43F5E' },
-];
-
-const sheetItems: MobileNavItem[] = [
-    { path: '/produce', label: 'Produce', icon: <Milk size={26} />, accent: '#0EA5E9' },
-    { path: '/inventory', label: 'Inventory', icon: <Wrench size={26} />, accent: '#8B5CF6' },
-    { path: '/workforce', label: 'Workforce', icon: <Users size={26} />, accent: '#6366F1' },
-    { path: '/settings', label: 'Settings', icon: <Settings size={26} />, accent: '#64748B' },
+    { path: '/produce', label: 'Produce', icon: <Milk size={ICON} />, accent: '#0EA5E9' },
+    { path: '/inventory', label: 'Inventory', icon: <Wrench size={ICON} />, accent: '#8B5CF6' },
+    { path: '/workforce', label: 'Workforce', icon: <Users size={ICON} />, accent: '#6366F1' },
+    { path: '/settings', label: 'Settings', icon: <Settings size={ICON} />, accent: '#64748B' },
 ];
 
 interface MobileNavProps {
     onLogout: () => void;
+    role?: UserRole;
 }
 
-const MobileNav: React.FC<MobileNavProps> = ({ onLogout }) => {
+const MobileNav: React.FC<MobileNavProps> = ({ onLogout, role }) => {
     const location = useLocation();
     const [sheetOpen, setSheetOpen] = useState(false);
 
     const barRef = useRef<HTMLElement>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
     const sheetRef = useRef<HTMLDivElement>(null);
+
+    // Only show destinations this role is allowed to access. Up to 4 live on the
+    // bar; anything beyond that drops into the "More" sheet.
+    const visibleItems = filterNavByRole(allItems, role);
+    const primaryItems = visibleItems.slice(0, 4);
+    const sheetItems = visibleItems.slice(4);
 
     const isPrimaryActive = primaryItems.some((i) => i.path === location.pathname);
 

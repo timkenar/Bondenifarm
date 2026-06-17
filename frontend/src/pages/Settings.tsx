@@ -1,9 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Moon, Sun, Shield, MapPin, Globe, Phone, Image as ImageIcon, Upload, X, Layout, Settings } from 'lucide-react';
+import { User, Mail, Moon, Sun, Shield, MapPin, Globe, Image as ImageIcon, Upload, X, Layout, Settings, Users, Plus, Trash2, Check, Pencil } from 'lucide-react';
 import api from '../api/axios';
+import { toArray } from '../api/helpers';
+import type { User as TeamUser, UserRole } from '../types';
+import { canManageTeam as roleCanManageTeam } from '../config/permissions';
 import FarmPlotsManager from '../components/FarmPlotsManager';
 import PageHeader from '../components/PageHeader';
+
+const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+    { value: 'SUPER_ADMIN', label: 'Super Admin' },
+    { value: 'FARM_MANAGER', label: 'Farm Manager' },
+    { value: 'VETERINARIAN', label: 'Veterinarian' },
+    { value: 'WORKER', label: 'Worker' },
+    { value: 'ACCOUNTANT', label: 'Accountant' },
+];
+
+const roleLabel = (role?: string) =>
+    ROLE_OPTIONS.find(r => r.value === role)?.label || (role || 'User');
 
 interface FarmProfile {
     id: string;
@@ -101,8 +115,8 @@ const COLOR_GROUPS: ColorGroup[] = [
 const ALL_COLOR_FIELDS = COLOR_GROUPS.flatMap(g => g.slots.map(s => s.field));
 
 const SettingsPage: React.FC = () => {
-    const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'profile' | 'farm' | 'plots' | 'appearance' | 'cms'>('farm');
+    const { user, refreshUser } = useAuth();
+    const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'farm' | 'plots' | 'appearance' | 'cms'>('farm');
     const [farm, setFarm] = useState<FarmProfile | null>(null);
     const [saving, setSaving] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -111,6 +125,21 @@ const SettingsPage: React.FC = () => {
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const logoInputRef = useRef<HTMLInputElement>(null);
     const photoInputRef = useRef<HTMLInputElement>(null);
+
+    // ===== My Account (self profile) =====
+    const [accountForm, setAccountForm] = useState({ full_name: '', phone: '' });
+    const [accountSaving, setAccountSaving] = useState(false);
+    const [accountSaved, setAccountSaved] = useState(false);
+
+    // ===== Team directory =====
+    const canManageTeam = !!user && (user.is_superuser || user.is_staff || roleCanManageTeam(user.role));
+    const [team, setTeam] = useState<TeamUser[]>([]);
+    const [teamLoading, setTeamLoading] = useState(false);
+    const [teamError, setTeamError] = useState<string | null>(null);
+    const emptyNewMember = { email: '', full_name: '', phone: '', role: 'WORKER' as UserRole, password: '' };
+    const [newMember, setNewMember] = useState(emptyNewMember);
+    const [addingMember, setAddingMember] = useState(false);
+    const [savingMemberId, setSavingMemberId] = useState<number | null>(null);
 
     // ===== CMS (landing page) =====
     const [cms, setCms] = useState<Record<string, string | null>>({});
@@ -124,6 +153,111 @@ const SettingsPage: React.FC = () => {
     useEffect(() => {
         fetchFarm();
     }, []);
+
+    // Keep the editable account form in sync with the logged-in user.
+    useEffect(() => {
+        if (user) {
+            setAccountForm({ full_name: user.full_name || '', phone: user.phone || '' });
+        }
+    }, [user]);
+
+    // Load the team directory when its tab is opened.
+    useEffect(() => {
+        if (activeTab === 'team' && team.length === 0) {
+            fetchTeam();
+        }
+    }, [activeTab]);
+
+    const fetchTeam = async () => {
+        setTeamLoading(true);
+        setTeamError(null);
+        try {
+            const res = await api.get('/users/');
+            setTeam(toArray<TeamUser>(res.data));
+        } catch (error) {
+            console.error('Error fetching team', error);
+            setTeamError('Could not load team members.');
+        } finally {
+            setTeamLoading(false);
+        }
+    };
+
+    const saveAccount = async () => {
+        setAccountSaving(true);
+        setAccountSaved(false);
+        try {
+            await api.patch('/users/me/', {
+                full_name: accountForm.full_name,
+                phone: accountForm.phone,
+            });
+            await refreshUser();
+            setAccountSaved(true);
+            setTimeout(() => setAccountSaved(false), 2500);
+        } catch (error) {
+            console.error('Error saving account', error);
+        } finally {
+            setAccountSaving(false);
+        }
+    };
+
+    const addMember = async () => {
+        if (!newMember.email || !newMember.password) return;
+        setAddingMember(true);
+        setTeamError(null);
+        try {
+            const res = await api.post('/users/', newMember);
+            setTeam(prev => [...prev, res.data].sort((a, b) =>
+                (a.full_name || a.email).localeCompare(b.full_name || b.email)));
+            setNewMember(emptyNewMember);
+        } catch (error: any) {
+            console.error('Error adding member', error);
+            const data = error?.response?.data;
+            const msg = data?.detail || data?.email?.[0] || data?.password?.[0] || 'Could not add member.';
+            setTeamError(msg);
+        } finally {
+            setAddingMember(false);
+        }
+    };
+
+    const updateMemberRole = async (member: TeamUser, role: UserRole) => {
+        setSavingMemberId(member.id);
+        try {
+            const res = await api.patch(`/users/${member.id}/`, { role });
+            setTeam(prev => prev.map(m => (m.id === member.id ? res.data : m)));
+        } catch (error) {
+            console.error('Error updating role', error);
+            setTeamError('Could not update role.');
+        } finally {
+            setSavingMemberId(null);
+        }
+    };
+
+    const toggleMemberActive = async (member: TeamUser) => {
+        setSavingMemberId(member.id);
+        try {
+            const res = await api.patch(`/users/${member.id}/`, { is_active: !member.is_active });
+            setTeam(prev => prev.map(m => (m.id === member.id ? res.data : m)));
+        } catch (error) {
+            console.error('Error toggling member', error);
+            setTeamError('Could not update member.');
+        } finally {
+            setSavingMemberId(null);
+        }
+    };
+
+    const removeMember = async (member: TeamUser) => {
+        if (!window.confirm(`Remove ${member.full_name || member.email} from the team?`)) return;
+        setSavingMemberId(member.id);
+        try {
+            await api.delete(`/users/${member.id}/`);
+            setTeam(prev => prev.filter(m => m.id !== member.id));
+        } catch (error: any) {
+            console.error('Error removing member', error);
+            setTeamError(error?.response?.data?.detail || 'Could not remove member.');
+        } finally {
+            setSavingMemberId(null);
+        }
+    };
 
     const fetchFarm = async () => {
         try {
@@ -300,6 +434,7 @@ const SettingsPage: React.FC = () => {
                 <div className={`tab ${activeTab === 'plots' ? 'active' : ''}`} onClick={() => setActiveTab('plots')}>Farm Plots</div>
                 <div className={`tab ${activeTab === 'cms' ? 'active' : ''}`} onClick={() => setActiveTab('cms')}>CMS</div>
                 <div className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>My Account</div>
+                <div className={`tab ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>Team</div>
                 <div className={`tab ${activeTab === 'appearance' ? 'active' : ''}`} onClick={() => setActiveTab('appearance')}>Appearance</div>
             </div>
 
@@ -585,33 +720,207 @@ const SettingsPage: React.FC = () => {
 
             {/* My Account Tab */}
             {activeTab === 'profile' && (
-                <div className="card" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                    <div style={{
-                        width: '100px', height: '100px', borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--primary), var(--accent-crops))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'white', fontSize: '3rem', fontWeight: 'bold', boxShadow: 'var(--shadow-lg)'
-                    }}>
-                        {user?.full_name?.charAt(0) || <User size={48} />}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{user?.full_name || 'Guest User'}</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Mail size={16} /> {user?.email}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Shield size={16} />
-                                <span style={{ textTransform: 'capitalize' }}>{user?.role?.toLowerCase().replace('_', ' ') || 'User'}</span>
-                            </div>
-                            {user?.phone && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="card" style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{
+                            width: '96px', height: '96px', borderRadius: '50%',
+                            background: 'linear-gradient(135deg, var(--primary), var(--accent-crops))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white', fontSize: '2.5rem', fontWeight: 700, boxShadow: 'var(--shadow-lg)',
+                            overflow: 'hidden', flexShrink: 0,
+                        }}>
+                            {user?.avatar
+                                ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : (user?.full_name?.charAt(0)?.toUpperCase() || <User size={44} />)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>{user?.full_name || 'Unnamed User'}</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', color: 'var(--text-muted)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Phone size={16} /> {user.phone}
+                                    <Mail size={16} /> {user?.email}
                                 </div>
-                            )}
-                            <div style={{ marginTop: '1rem' }}>
-                                <span className="badge badge-success">Active Account</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Shield size={16} />
+                                    <span>{roleLabel(user?.role)}</span>
+                                </div>
+                                <div style={{ marginTop: '0.5rem' }}>
+                                    <span className="badge badge-success">Active Account</span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <h3 style={{ marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Pencil size={18} color="var(--primary)" /> Edit Profile
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Full Name</label>
+                                <input
+                                    className="input"
+                                    value={accountForm.full_name}
+                                    onChange={e => setAccountForm(f => ({ ...f, full_name: e.target.value }))}
+                                    placeholder="Your full name"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Phone</label>
+                                <input
+                                    className="input"
+                                    value={accountForm.phone}
+                                    onChange={e => setAccountForm(f => ({ ...f, phone: e.target.value }))}
+                                    placeholder="e.g. +254 700 000000"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input className="input" value={user?.email || ''} disabled />
+                            </div>
+                            <div className="form-group">
+                                <label>Role</label>
+                                <input className="input" value={roleLabel(user?.role)} disabled />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                            <button className="btn btn-primary" onClick={saveAccount} disabled={accountSaving}>
+                                {accountSaving ? 'Saving…' : 'Save Changes'}
+                            </button>
+                            {accountSaved && (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--primary)', fontSize: '0.875rem' }}>
+                                    <Check size={16} /> Saved
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Team Directory Tab */}
+            {activeTab === 'team' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {canManageTeam && (
+                        <div className="card">
+                            <h3 style={{ marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Plus size={18} color="var(--primary)" /> Add Team Member
+                            </h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Full Name</label>
+                                    <input className="input" value={newMember.full_name}
+                                        onChange={e => setNewMember(m => ({ ...m, full_name: e.target.value }))}
+                                        placeholder="Jane Doe" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email *</label>
+                                    <input className="input" type="email" value={newMember.email}
+                                        onChange={e => setNewMember(m => ({ ...m, email: e.target.value }))}
+                                        placeholder="jane@farm.com" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Phone</label>
+                                    <input className="input" value={newMember.phone}
+                                        onChange={e => setNewMember(m => ({ ...m, phone: e.target.value }))}
+                                        placeholder="+254 …" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <select className="input" value={newMember.role}
+                                        onChange={e => setNewMember(m => ({ ...m, role: e.target.value as UserRole }))}>
+                                        {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Temporary Password *</label>
+                                    <input className="input" type="password" value={newMember.password}
+                                        onChange={e => setNewMember(m => ({ ...m, password: e.target.value }))}
+                                        placeholder="Set a password" />
+                                </div>
+                            </div>
+                            {teamError && <p style={{ color: 'var(--danger)', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>{teamError}</p>}
+                            <button className="btn btn-primary" onClick={addMember}
+                                disabled={addingMember || !newMember.email || !newMember.password}>
+                                {addingMember ? 'Adding…' : 'Add Member'}
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="card">
+                        <h3 style={{ marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Users size={18} color="var(--primary)" /> Team Directory
+                            <span className="badge" style={{ marginLeft: 'auto' }}>{team.length} member{team.length === 1 ? '' : 's'}</span>
+                        </h3>
+
+                        {teamLoading && <p style={{ color: 'var(--text-muted)' }}>Loading team…</p>}
+                        {!teamLoading && !canManageTeam && teamError && (
+                            <p style={{ color: 'var(--text-muted)' }}>{teamError}</p>
+                        )}
+                        {!teamLoading && team.length === 0 && !teamError && (
+                            <p style={{ color: 'var(--text-muted)' }}>No team members yet.</p>
+                        )}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {team.map(member => {
+                                const isSelf = member.id === user?.id;
+                                const busy = savingMemberId === member.id;
+                                return (
+                                    <div key={member.id} style={{
+                                        display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+                                        padding: '0.875rem 1rem', borderRadius: '14px',
+                                        background: 'var(--bg-main)', border: '1px solid var(--border)',
+                                        opacity: member.is_active === false ? 0.55 : 1,
+                                    }}>
+                                        <div style={{
+                                            width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+                                            background: 'linear-gradient(135deg, var(--primary), var(--accent-crops))',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            color: 'white', fontWeight: 700, overflow: 'hidden',
+                                        }}>
+                                            {member.avatar
+                                                ? <img src={member.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                : (member.full_name?.charAt(0)?.toUpperCase() || member.email.charAt(0).toUpperCase())}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: '160px' }}>
+                                            <div style={{ fontWeight: 600 }}>
+                                                {member.full_name || member.email}
+                                                {isSelf && <span className="badge" style={{ marginLeft: '0.5rem' }}>You</span>}
+                                                {member.is_active === false && <span className="badge" style={{ marginLeft: '0.5rem' }}>Inactive</span>}
+                                            </div>
+                                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{member.email}</div>
+                                        </div>
+
+                                        {canManageTeam ? (
+                                            <select
+                                                className="input"
+                                                style={{ width: 'auto', minWidth: '150px' }}
+                                                value={member.role}
+                                                disabled={busy || isSelf}
+                                                onChange={e => updateMemberRole(member, e.target.value as UserRole)}
+                                            >
+                                                {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                            </select>
+                                        ) : (
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                                                <Shield size={15} /> {roleLabel(member.role)}
+                                            </span>
+                                        )}
+
+                                        {canManageTeam && !isSelf && (
+                                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                                <button className="btn btn-secondary" disabled={busy}
+                                                    onClick={() => toggleMemberActive(member)}
+                                                    title={member.is_active === false ? 'Activate' : 'Deactivate'}>
+                                                    {member.is_active === false ? 'Activate' : 'Deactivate'}
+                                                </button>
+                                                <button className="btn btn-danger" disabled={busy}
+                                                    onClick={() => removeMember(member)} title="Remove">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

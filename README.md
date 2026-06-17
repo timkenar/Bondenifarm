@@ -2,6 +2,41 @@
 
 A farm management platform built with Django (backend) and React + TypeScript (frontend).
 
+Bondeni Farm helps farm owners and their teams run day-to-day operations from one
+place — tracking **livestock**, **crops**, **produce**, **inventory**, the
+**workforce**, and **commerce/sales**, with a configurable landing page and farm
+profile. Access to each area is controlled by a role assigned to every member, so
+people only see what's relevant to their job.
+
+## User Roles & Permissions
+
+Every user is assigned one role, which determines the menus and pages they can
+access. Roles are managed by a Super Admin or Farm Manager under
+**Settings → Team**, where members can be added, have their role changed, be
+deactivated, or removed.
+
+The hierarchy, from most to least access:
+
+| Role | Description | Can access |
+|------|-------------|------------|
+| **Super Admin** | Owner-level account with full control over the whole platform, including team management and CMS. | Everything |
+| **Farm Manager** | Runs daily operations across all departments. | Everything |
+| **Accountant** | Finance & records focus — sales, stock and payroll-related views. | Dashboard, Commerce, Produce, Inventory, Workforce, Settings |
+| **Veterinarian** | Animal-health focus. | Dashboard, Livestock, Produce, Settings |
+| **Worker** | Field staff who only see what they need for their tasks. | Dashboard, Produce, Crops, Livestock records, Commerce, Settings |
+
+Notes:
+
+- **Settings** is available to everyone so each member can edit their own profile
+  (name, phone, password). Only Super Admin and Farm Manager additionally see the
+  **Team** management and landing-page **CMS** controls.
+- Permissions are enforced both in the UI (sidebar, mobile navigation and route
+  guards) and on the backend API, so restricted areas can't be reached by editing
+  the URL.
+- The visible menus per role are defined centrally in
+  `frontend/src/config/permissions.ts`, and the role choices live in the backend
+  user model (`backend/users/models.py`).
+
 ## Architecture
 
 ```
