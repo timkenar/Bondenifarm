@@ -76,7 +76,14 @@ const Landing: React.FC = () => {
     /** Build inline style for a slot — sets backgroundImage if CMS has a URL. */
     const slotStyle = (slot: string): React.CSSProperties | undefined => {
         const field = SLOT_TO_FIELD[slot];
-        const url = field ? content[field] : null;
+        let url = field ? content[field] : null;
+
+        if (url && url.startsWith('/')) {
+            // Prefix relative paths with the API base domain to ensure they load from the VPS
+            const baseUrl = API_BASE.replace('/api', '');
+            url = `${baseUrl}${url}`;
+        }
+
         return url ? { backgroundImage: `url(${url})` } : undefined;
     };
 

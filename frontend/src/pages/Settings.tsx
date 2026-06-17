@@ -149,9 +149,7 @@ const SettingsPage: React.FC = () => {
                 });
                 if (logoFile) fd.append('logo', logoFile);
                 if (photoFile) fd.append('photo', photoFile);
-                const res = await api.patch('/farm/profile/', fd, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
+                const res = await api.patch('/farm/profile/', fd);
                 setFarm(res.data);
                 setLogoPreview(res.data.logo || null);
                 setPhotoPreview(res.data.photo || null);
@@ -258,9 +256,7 @@ const SettingsPage: React.FC = () => {
                 if (cmsColors[f]) { fd.append(f, cmsColors[f]); hasChange = true; }
             });
             if (!hasChange) { setCmsSaving(false); return; }
-            const res = await api.patch('/landing/content/', fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            const res = await api.patch('/landing/content/', fd);
             const data: Record<string, string | null> = {};
             const previews: Record<string, string | null> = {};
             CMS_GROUPS.forEach(g => g.slots.forEach(s => {

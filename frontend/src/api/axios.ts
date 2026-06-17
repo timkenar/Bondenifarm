@@ -14,6 +14,20 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Token ${token}`;
         }
+
+        // Let the browser set the multipart boundary for FormData uploads.
+        // A manually forced multipart content type without a boundary can
+        // prevent Django from parsing uploaded files correctly.
+        if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+            const headers = config.headers as Record<string, string> & { set?: (key: string, value: string | null) => void };
+            if (typeof headers.set === 'function') {
+                headers.set('Content-Type', null);
+            } else {
+                delete headers['Content-Type'];
+                delete headers['content-type'];
+            }
+        }
+
         return config;
     },
     (error) => Promise.reject(error)
